@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api, web]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install & build
+        run: |
+          cd apps/${{ matrix.service }}
+          npm ci
+          npm run build --if-present
+
+      - name: Run tests
+        run: |
+          cd apps/${{ matrix.service }}
+          npm test --if-present
+
+      - name: Lint (if available)
+        run: |
+          cd apps/${{ matrix.service }}
+          npm run lint --if-present

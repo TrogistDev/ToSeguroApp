@@ -1,0 +1,35 @@
+services:
+  app:
+    build:
+      context: ./WEB # <-- Caminho relativo apontando para a pasta do front-end
+      dockerfile: Dockerfile
+    container_name: accident_frontend
+    restart: always
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: accident_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-user_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password_secure}
+      POSTGRES_DB: ${DB_NAME:-accident_report_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    container_name: accident_cache
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

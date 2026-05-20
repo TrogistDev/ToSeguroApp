@@ -1,0 +1,62 @@
+// apps/api/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/infrastructure/database/generated-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id        String     @id @default(uuid())
+  name      String
+  slug      String     @unique
+  users     User[]
+  accidents Accident[]
+  createdAt DateTime   @default(now())
+}
+
+model User {
+  id           String     @id @default(uuid())
+  tenantId     String
+  tenant       Tenant     @relation(fields: [tenantId], references: [id])
+  email        String     @unique
+  passwordHash String?
+  role         String     @default("USER") // ADMIN ou USER
+  firstName    String?
+  lastName     String?
+  vehiclePlate String?
+  vehicleBrand String?
+  vehicleModel String?
+  vehicleYear  Int?
+  isFirstLogin Boolean    @default(true)
+  accidents    Accident[]
+  createdAt    DateTime   @default(now())
+}
+
+model Accident {
+  id           String          @id @default(uuid())
+  tenantId     String
+  tenant       Tenant          @relation(fields: [tenantId], references: [id])
+  userId       String
+  user         User            @relation(fields: [userId], references: [id])
+  fullName     String
+  lastName     String
+  locationLat  Decimal
+  locationLng  Decimal
+  addressText  String
+  accidentType String
+  sceneData    Json
+  photos       AccidentPhoto[]
+  createdAt    DateTime        @default(now())
+}
+
+model AccidentPhoto {
+  id         String   @id @default(uuid())
+  accidentId String
+  accident   Accident @relation(fields: [accidentId], references: [id])
+  url        String
+  createdAt  DateTime @default(now())
+}

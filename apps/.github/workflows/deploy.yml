@@ -1,0 +1,36 @@
+name: Deploy ToSeguroApp to AWS EC2
+
+on:
+  push:
+    branches:
+      - main # ou master (ajuste para a sua branch principal)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to AWS EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ubuntu
+          key: ${{ secrets.AWS_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # 1. Entrar ou Clonar o repositório na máquina da AWS
+            if [ ! -d "ToSeguroApp" ]; then
+              git clone https://github.com/${{ github.repository }}.git ToSeguroApp
+              cd ToSeguroApp/apps
+            else
+              cd ToSeguroApp
+              git pull origin main
+              cd apps
+            fi
+
+            # 2. Rodar o Docker Compose em produção na nuvem
+            docker compose down
+            docker compose up --build -d
