@@ -3,7 +3,7 @@ name: Deploy ToSeguroApp to AWS EC2
 on:
   push:
     branches:
-      - main # ou master (ajuste para a sua branch principal)
+      - main
 
 jobs:
   deploy:
@@ -21,16 +21,17 @@ jobs:
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           port: 22
           script: |
-            # 1. Entrar ou Clonar o repositório na máquina da AWS
+            # 1. Entrar ou clonar o projeto na raiz do servidor AWS
             if [ ! -d "ToSeguroApp" ]; then
               git clone https://github.com/${{ github.repository }}.git ToSeguroApp
               cd ToSeguroApp/apps
             else
               cd ToSeguroApp
+              git reset --hard origin/main
               git pull origin main
               cd apps
             fi
 
-            # 2. Rodar o Docker Compose em produção na nuvem
+            # 2. Parar containers antigos e buildar o novo com Node v22 interno do Docker
             docker compose down
             docker compose up --build -d
