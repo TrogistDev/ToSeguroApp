@@ -21,17 +21,17 @@ jobs:
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           port: 22
           script: |
-            # 1. Entrar ou clonar o projeto na raiz do servidor AWS
+            # 1. Garantir que estamos na pasta certa ou clonar
             if [ ! -d "ToSeguroApp" ]; then
-              git clone https://github.com/${{ github.repository }}.git ToSeguroApp
+              git clone https://github.com/${{ github.repository }} ToSeguroApp
               cd ToSeguroApp/apps
             else
               cd ToSeguroApp
+              git fetch --all
               git reset --hard origin/main
-              git pull origin main
               cd apps
             fi
 
-            # 2. Parar containers antigos e buildar o novo com Node v22 interno do Docker
+            # 2. Comando único de deploy na AWS
             docker compose down
             docker compose up --build -d
