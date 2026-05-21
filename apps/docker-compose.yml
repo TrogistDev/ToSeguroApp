@@ -1,7 +1,7 @@
 services:
   app:
     build:
-      context: ./web
+      context: ../web       # <-- Sobe um nível para achar a pasta web (fora de apps)
       dockerfile: Dockerfile
     container_name: accident_frontend
     restart: always
@@ -14,7 +14,7 @@ services:
 
   api:
     build:
-      context: ./apps/api # <-- Garanta que aponta para a pasta correta da sua API
+      context: ./api        # <-- Se a API está dentro de apps/api, o caminho relativo ao compose é apenas ./api
       dockerfile: Dockerfile
     container_name: accident_backend
     restart: always
