@@ -21,19 +21,18 @@ jobs:
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           script_stop: true
           script: |
-            # 1. Se a pasta não existir, faz o clone inicial; se existir, atualiza de forma limpa
-            if [ ! -d "ToSeguroApp" ]; then
-              git clone https://github.com/TrogistDev/ToSeguroApp.git ToSeguroApp
-              cd ToSeguroApp/apps
-            else
-              cd ToSeguroApp
-              git reset --hard
-              git pull origin main
-              cd apps
-            fi
+            # 1. Navegar direto para a pasta do projeto que JÁ EXISTE na máquina
+            cd /home/ubuntu/ToSeguroApp
 
-            # 2. Injeta o .env de produção atualizado
+            # 2. Atualizar o código de forma rígida com o que foi commitado
+            git reset --hard
+            git pull origin main
+
+            # 3. Mudar para o diretório da infraestrutura
+            cd apps
+
+            # 4. Atualizar as variáveis de ambiente a partir das Secrets do GitHub
             echo "${{ secrets.PROD_ENV_FILE }}" > .env
 
-            # 3. Build e Atualização Automática sem quebrar o site (Zero Downtime)
+            # 5. Orquestrar os containers com Zero Downtime
             docker-compose up --build -d --remove-orphans
