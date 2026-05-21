@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import { AccidentRepository } from "../../infrastructure/repositories/AccidentRepository";
-import { S3Client } from "../../infrastructure/aws/s3Client";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
 import { S3Service } from "../../infrastructure/aws/s3Service";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { ExportAccidentUseCase } from "../../core/use-cases/ExportAccidentUseCase";
 
 const accidentRepo = new AccidentRepository();

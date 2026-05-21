@@ -34,6 +34,19 @@ model User {
   isFirstLogin Boolean    @default(true)
   accidents    Accident[]
   createdAt    DateTime   @default(now())
+    passwordResetTokens PasswordResetToken[] // ← Adicione esta linha
+
+}
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   // SHA-256 do token gerado (não em claro!)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([userId]) // Um token por usuário ativo
 }
 
 model Accident {

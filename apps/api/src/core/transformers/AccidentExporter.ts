@@ -1,4 +1,4 @@
-import { canvasTheme } from './../../../../web/src/styles/canvasTheme';
+import { canvasTheme } from '../constants/canvasTheme';
 // apps/api/src/core/transformers/AccidentExporter.ts
 import { SceneObject, PhotoExport, LocationExport, VehicleExport, AccidentExportDto } from '../../interface-adapters/dtos/AccidentExportDto';
 
