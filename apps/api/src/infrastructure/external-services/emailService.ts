@@ -1,23 +1,37 @@
-// apps/api/src/infrastructure/services/EmailService.ts
 import nodemailer from 'nodemailer';
-import { MailtrapTransport } from 'mailtrap';
 
 export class EmailService {
   private transporter: nodemailer.Transporter;
+  private fromEmail: string;
 
   constructor() {
-    const token = process.env.EMAIL_PASS; // Usamos o seu token: ba20cc09bbd038387ff3c
+    const host = process.env.EMAIL_HOST;
+    const port = Number(process.env.EMAIL_PORT) || 465;
+    const user = process.env.EMAIL_USER;
+    const pass = process.env.EMAIL_PASS;
+    const from = process.env.EMAIL_FROM;
 
-    if (!token) {
-      throw new Error("❌ EmailService: Token de autenticação do Mailtrap (EMAIL_PASS) não configurado.");
+    // Defesa estrita: Garante que a aplicação não suba sem as variáveis vitais de infraestrutura
+    if (!host || !user || !pass || !from) {
+      throw new Error("❌ EmailService: Variáveis de ambiente de e-mail (EMAIL_HOST, EMAIL_USER, EMAIL_PASS, EMAIL_FROM) não configuradas.");
     }
 
-    // Inicialização rígida utilizando o transporte oficial via SDK
-    this.transporter = nodemailer.createTransport(
-      MailtrapTransport({
-        token: token,
-      })
-    );
+    this.fromEmail = from;
+
+    // Inicialização utilizando transporte SMTP universal seguro
+    this.transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465, // true para SSL na porta 465, false para STARTTLS na porta 587
+      auth: {
+        user,
+        pass,
+      },
+      tls: {
+        // Proteção contra falhas de handshake em conexões com servidores rigorosos
+        rejectUnauthorized: true,
+      },
+    });
   }
 
   async sendResetPasswordEmail(to: string, resetToken: string): Promise<boolean> {
@@ -25,7 +39,7 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail({
-        from: { address: "no-reply@demomailtrap.co", name: "Accident System" },
+        from: { address: this.fromEmail, name: "Accident System" },
         to: [to],
         subject: "Recuperação de Senha - Urgente",
         html: `
@@ -51,7 +65,7 @@ export class EmailService {
   async sendWelcomeEmail(to: string, tempPassword: string): Promise<boolean> {
     try {
       await this.transporter.sendMail({
-        from: { address: "no-reply@demomailtrap.co", name: "Accident System" },
+        from: { address: this.fromEmail, name: "Accident System" },
         to: [to],
         subject: "Bem-vindo ao Sistema de Reportes",
         html: `

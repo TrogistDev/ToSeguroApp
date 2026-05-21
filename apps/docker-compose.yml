@@ -1,15 +1,30 @@
 services:
   app:
     build:
-      context: ./web # <-- Caminho relativo apontando para a pasta do front-end
+      context: ./web
       dockerfile: Dockerfile
     container_name: accident_frontend
     restart: always
     ports:
       - "3001:3001"
     depends_on:
+      - api
       - postgres
       - redis
+
+  api:
+    build:
+      context: ./apps/api # <-- Garanta que aponta para a pasta correta da sua API
+      dockerfile: Dockerfile
+    container_name: accident_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER:-user_admin}:${DB_PASSWORD:-password_secure}@postgres:5432/${DB_NAME:-accident_report_db}?schema=public
+    depends_on:
+      - postgres
 
   postgres:
     image: postgres:16-alpine

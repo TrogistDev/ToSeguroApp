@@ -1,56 +1,45 @@
 # Build stage
-FROM node:18-alpine AS builder
-
+FROM node:22.12.0-alpine AS builder
 WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
+# Copia o schema do prisma antes para cachear as dependências corretamente
+COPY prisma ./prisma/ 
 RUN npm ci
-
-# Copy source
 COPY . .
-
-# Build (if build script exists)
-RUN npm run build --if-present
+RUN npm run build
 
 # Runtime stage
-FROM node:18-alpine
-
+FROM node:22.12.0-alpine
 WORKDIR /app
 
-# Install dumb-init to handle signals properly
 RUN apk add --no-cache dumb-init
 
-# Create non-root user for security
+# Criar usuário non-root para segurança
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
+# Instala dependências de produção e força a geração do Prisma Client
 RUN npm ci --only=production && \
     npm cache clean --force
 
-# Copy built application from builder
+# Copiar build e a pasta do prisma do estágio anterior
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Change ownership to nodejs user
+# Gerar o Prisma Client nativo dentro do container de produção antes de mudar o owner
+RUN npx prisma generate
+
+# Mudar permissões para o utilizador seguro
 RUN chown -R nodejs:nodejs /app
 
-# Switch to non-root user
 USER nodejs
 
-# Expose port
 EXPOSE 3000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
 
-# Use dumb-init to run the app
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "dist/server.js"]
