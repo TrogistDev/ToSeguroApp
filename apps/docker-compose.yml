@@ -3,6 +3,9 @@ services:
     build:
       context: ./web       # <-- Sobe um nível para achar a pasta web (fora de apps)
       dockerfile: Dockerfile
+      args:
+        # 👇 Passa o Client ID para dentro do processo de Build do Dockerfile
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
     container_name: accident_frontend
     restart: always
     ports:
