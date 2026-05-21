@@ -1,7 +1,7 @@
 services:
   app:
     build:
-      context: ./WEB # <-- Caminho relativo apontando para a pasta do front-end
+      context: ./web # <-- Caminho relativo apontando para a pasta do front-end
       dockerfile: Dockerfile
     container_name: accident_frontend
     restart: always
