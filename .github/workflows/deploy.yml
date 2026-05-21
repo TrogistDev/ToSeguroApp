@@ -20,11 +20,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           port: 22
-          script_stop: true # Para a execução imediatamente se algum comando falhar
+          script_stop: true
           script: |
-            # Forçar o carregamento do perfil do sistema para reconhecer o Docker
-            . ~/.bashrc
-            
             # 1. Garantir que estamos na pasta certa ou clonar
             if [ ! -d "ToSeguroApp" ]; then
               git clone https://github.com/TrogistDev/ToSeguroApp ToSeguroApp
@@ -36,6 +33,6 @@ jobs:
               cd apps
             fi
 
-            # 2. Comando único de deploy usando sudo para evitar falhas de contexto de sessão
-            sudo docker compose down --remove-orphans
-            sudo docker compose up --build -d
+            # 2. Executar chamando o binário direto do Docker pelo caminho absoluto do sistema
+            /usr/bin/docker compose down --remove-orphans
+            /usr/bin/docker compose up --build -d
