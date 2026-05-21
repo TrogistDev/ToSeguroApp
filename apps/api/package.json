@@ -2,13 +2,14 @@
   "name": "api",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "directories": {
     "test": "tests",
     "dev": "npm start"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc || echo 'TypeScript com avisos, mas build gerado com sucesso.'",
+    "build": "tsc'",
     "start": "node dist/server.js"
   },
   "keywords": [],
