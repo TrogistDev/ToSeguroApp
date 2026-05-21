@@ -16,9 +16,9 @@ jobs:
       - name: Deploy to AWS EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.AWS_HOST }}       # <-- Garanta que este segredo existe com o IP 13.60.56.153
-          username: ${{ secrets.AWS_USER }}   # <-- Geralmente 'ubuntu'
-          key: ${{ secrets.AWS_SSH_KEY }}    # <-- O conteúdo do teu arquivo .pem
+          host: ${{ secrets.AWS_HOST }}            # <-- Bate com o seu segredo do GitHub
+          username: ubuntu                         # <-- String rígida direta (evita precisar de outro segredo)
+          key: ${{ secrets.AWS_PRIVATE_KEY }}      # <-- Ajustado para ler o seu segredo real
           script_stop: true
           script: |
             # 1. Garantir que o Docker Compose está instalado na máquina virtual
@@ -28,18 +28,22 @@ jobs:
               sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
             fi
 
-            # 2. Parar os containers antes de apagar a pasta
+            # 2. Parar os containers antes de apagar a pasta (Evita travar volumes e descritores de rede)
             if [ -d "ToSeguroApp/apps" ]; then
               cd ToSeguroApp/apps
               docker-compose down || true
               cd ../..
             fi
 
-            # 3. Limpeza profunda
+            # 3. Limpeza ultra-agressiva para matar o bug de refs do Git
             sudo rm -rf ToSeguroApp
             sync
 
-            # 4. Clone e Orquestração
+            # 4. Clonar o repositório utilizando uma abordagem limpa
             git clone https://github.com/TrogistDev/ToSeguroApp.git ToSeguroApp
+
+            # 5. Entrar na pasta correta da arquitetura
             cd ToSeguroApp/apps
+
+            # 6. Orquestrar os containers com o binário garantido
             docker-compose up --build -d
