@@ -22,17 +22,22 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            # 1. Limpar ambiente antigo
+            # 1. Garantir que o Docker Compose está instalado na máquina virtual (Abordagem Rígida)
+            if ! command -v docker-compose &> /dev/null; then
+              sudo curl -L "https://github.com/docker/compose/releases/download/v2.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+              sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
+            fi
+
+            # 2. Limpar ambiente antigo
             rm -rf ToSeguroApp
             
-            # 2. Clonar o repositório de forma limpa
+            # 3. Clonar o repositório de forma limpa
             git clone https://github.com/TrogistDev/ToSeguroApp.git ToSeguroApp
             
-            # 3. Entrar na pasta correta da arquitetura
+            # 4. Entrar na pasta correta da arquitetura
             cd ToSeguroApp/apps
 
-            # 4. Parar serviços antigos usando a sintaxe clássica do pacote instalado
+            # 5. Orquestrar os containers com o binário garantido
             docker-compose down || true
-            
-            # 5. Buildar e subir os containers (Postgres, Redis, Frontend)
             docker-compose up --build -d
