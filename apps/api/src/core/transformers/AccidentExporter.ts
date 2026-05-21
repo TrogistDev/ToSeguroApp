@@ -93,6 +93,7 @@ export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
   return {
     incidentId: accident.id,
     reportedAt: accident.reportedAt.toISOString(),
+    sceneSummary: accident.addressText || '',
     reporter: {
       name: accident.user.name,
       contact: accident.user.contact

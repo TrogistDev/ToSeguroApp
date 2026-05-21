@@ -6,6 +6,7 @@ COPY prisma ./prisma/
 # Adicionada a flag para contornar o conflito do mailtrap/nodemailer
 RUN npm ci --legacy-peer-deps
 COPY . .
+RUN npx prisma generate --schema=./prisma/schema.prisma
 RUN npm run build
 
 # Runtime stage
@@ -26,7 +27,6 @@ RUN npm ci --only=production --legacy-peer-deps && \
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-RUN npx prisma generate --schema=./prisma/schema.prisma
 
 RUN chown -R nodejs:nodejs /app
 
