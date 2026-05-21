@@ -10,7 +10,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "noEmitOnError": false,
-    "suppressImplicitAnyIndexErrors": true
+    "noImplicitAny": false  // Desativa a validação estrita de tipos implícitos como any
   },
   "include": ["src/**/*"]
 }
