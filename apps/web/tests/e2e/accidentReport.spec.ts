@@ -1,31 +1,50 @@
 // apps/web/tests/e2e/accidentReport.spec.ts
 import { test, expect } from '@playwright/test';
 
+const BACKEND_API = process.env.API_URL || 'http://localhost:3000/api';
+
 test.describe('Fluxo do Formulário de Relato de Sinistro (AccidentReportForm)', () => {
-  
   test.beforeEach(async ({ page }) => {
-    // Acessa a página do formulário local (ajuste a rota se necessário, ex: /report)
-    await page.goto('/'); 
+    await page.goto('/');
   });
 
-  test('Deve renderizar o Passo 1 corretamente e validar campos obrigatórios', async ({ page }) => {
-    // 1. Verifica se o cabeçalho do formulário está visível
-    const header = page.locator('h2:has-text("Relatar Sinistro")');
-    await expect(header).toBeVisible();
+  test('Deve renderizar o passo 1 e avançar para o passo 2', async ({ page }) => {
+    await expect(page.locator('h2:has-text("Relatar Sinistro")')).toBeVisible();
+    await expect(page.locator('span:has-text("Passo 1 de 3")')).toBeVisible();
 
-    // 2. Verifica se o badge indica "Passo 1 de 3"
-    const stepBadge = page.locator('span:has-text("Passo 1 de 3")');
-    await expect(stepBadge).toBeVisible();
+    await page.fill('input[placeholder="Su nombre"]', 'Gustavo');
+    await page.fill('input[placeholder="Apellido"]', 'Developer');
+    await page.selectOption('select', { label: 'Colisión' });
+    await page.fill('input[placeholder="Digite o endereço ou use GPS"]', 'Av. Paulista, 1000');
 
-    // 3. Valida que o botão "Siguiente" inicia desabilitado devido às travas rígidas de validação
-    const nextButton = page.locator('button:has-text("Siguiente")');
-    await expect(nextButton).toBeDisabled();
+    await page.click('button:has-text("Continuar")');
+    await expect(page.locator('span:has-text("Passo 2 de 3")')).toBeVisible();
+  });
 
-    // 4. Preenche os campos de Nome e Apellido
-    await page.locator('label:has-text("Nombre") + input').fill('Gustavo');
-    await page.locator('label:has-text("Apellido") + input').fill('Developer');
+  test('Deve submeter relatório e exibir alerta de sucesso', async ({ page }) => {
+    await page.fill('input[placeholder="Su nombre"]', 'Gustavo');
+    await page.fill('input[placeholder="Apellido"]', 'Developer');
+    await page.selectOption('select', { label: 'Colisión' });
+    await page.fill('input[placeholder="Digite o endereço ou use GPS"]', 'Av. Paulista, 1000');
 
-    // O botão deve continuar desabilitado porque falta a localização (Autocomplete)
-    await expect(nextButton).toBeDisabled();
+    await page.click('button:has-text("Continuar")');
+    await page.click('button:has-text("Siguiente")');
+    await expect(page.locator('span:has-text("Passo 3 de 3")')).toBeVisible();
+
+    await page.route(`${BACKEND_API}/accidents`, (route) => {
+      route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'fake-accident-id' }),
+      });
+    });
+
+    page.once('dialog', async (dialog) => {
+      expect(dialog.message()).toContain('Sinistro relatado com sucesso');
+      await dialog.accept();
+    });
+
+    await page.click('button:has-text("Finalizar reporte")');
+    await expect(page.locator('span:has-text("Passo 1 de 3")')).toBeVisible();
   });
 });

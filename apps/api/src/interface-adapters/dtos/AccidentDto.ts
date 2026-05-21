@@ -1,11 +1,10 @@
-
 // apps/api/src/interface-adapters/dtos/AccidentDto.ts
 import { z } from 'zod';
 
-// Criação de um tipo flexível e seguro para aceitar o JSON estruturado do Konva
+// ✅ CORREÇÃO DEFINITIVA: Passando os 2 argumentos exigidos pela tua assinatura do Zod (Chave, Valor)
 const KonvaJsonSchema = z.union([
-  z.record(z.any()), // Aceita objetos do tipo { key: value }
-  z.array(z.any())   // Aceita listas/arrays do tipo [elementos...] (Padrão de listas do Konva)
+  z.record(z.string(), z.any()), // 👈 Aqui (keyType, valueType). O erro sumirá aqui.
+  z.array(z.any())
 ]);
 
 // Validación estricta para el Paso 1, 2 y 3 del formulario
@@ -20,7 +19,7 @@ export const CreateAccidentSchema = z.object({
   accidentType: z.enum(['collision', 'rollover', 'theft', 'other']),
   photos: z.array(z.string().url()).optional(), // URLs de S3/Cloudinary
   
-  // CORREÇÃO: Blindagem para aceitar tanto objetos quanto arrays de elementos gráficos
+  // Blindagem para aceitar tanto objetos quanto arrays de elementos gráficos
   sceneData: KonvaJsonSchema, 
 });
 
