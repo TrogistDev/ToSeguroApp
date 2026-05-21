@@ -22,15 +22,15 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            # 1. Garantir um ambiente 100% limpo na nuvem
-            sudo rm -rf ToSeguroApp
+            # 1. Limpar a pasta se ela existir usando o escopo do usuário atual
+            rm -rf ToSeguroApp
             
-            # 2. Clonar o repositório atualizado de forma limpa
+            # 2. Clonar o repositório
             git clone https://github.com/TrogistDev/ToSeguroApp.git ToSeguroApp
             
             # 3. Entrar na pasta onde está o Docker Compose
             cd ToSeguroApp/apps
 
-            # 4. Executar o deploy chamando o caminho absoluto do binário via sudo
-            sudo /usr/bin/docker compose down --remove-orphans
-            sudo /usr/bin/docker compose up --build -d
+            # 4. Executar os comandos nativos do Docker Compose sem sudo
+            docker compose down --remove-orphans
+            docker compose up --build -d
