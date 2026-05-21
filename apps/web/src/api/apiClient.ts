@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
+// Injeta dinamicamente a URL da VPS em produção ou mantém localhost em desenvolvimento
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3000/api', 
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api', 
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -12,6 +13,7 @@ apiClient.interceptors.request.use((config) => {
   // a requisição está saindo sem autenticação.
   console.log("🚀 Request Interceptor Debug:", { 
       url: config.url, 
+      baseURL: config.baseURL, // Adicionado para validação de rota em produção
       hasToken: !!token, 
       hasTenant: !!tenantSlug 
   });
