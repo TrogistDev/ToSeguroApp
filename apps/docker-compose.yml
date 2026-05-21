@@ -1,7 +1,7 @@
 services:
   app:
     build:
-      context: ../web       # <-- Sobe um nível para achar a pasta web (fora de apps)
+      context: ./web       # <-- Sobe um nível para achar a pasta web (fora de apps)
       dockerfile: Dockerfile
     container_name: accident_frontend
     restart: always
