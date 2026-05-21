@@ -126,7 +126,7 @@ export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
       createdAt: new Date().toISOString(),
       platform: 'web'
     },
-    layersZ: layersZ,
+    layersZ: [...layersZ],
   };
 }
 

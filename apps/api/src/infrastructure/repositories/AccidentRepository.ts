@@ -112,7 +112,7 @@ async findByIdWithDetails(id: string): Promise<any> {
       locationLng: accident.locationLng,
       addressText: accident.addressText,
       sceneData,
-      photos: accident.photos.map(p => ({
+      photos: accident.photos.map((p: any) => ({
         id: p.id,
         url: p.url,
         type: p.type || undefined,

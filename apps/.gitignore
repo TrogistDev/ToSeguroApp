@@ -36,3 +36,4 @@ logs/
 /apps/api/tests/playwright-report/
 /apps/api/tests/playwright-results/
 /apps/api/tests/load/k6-results/
+**/src/infrastructure/database/generated-client/

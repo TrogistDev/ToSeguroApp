@@ -26,7 +26,7 @@ RUN npm ci --only=production --legacy-peer-deps && \
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-RUN npx prisma generate
+RUN npx prisma generate --schema=./prisma/schema.prisma
 
 RUN chown -R nodejs:nodejs /app
 

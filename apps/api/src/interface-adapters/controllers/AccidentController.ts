@@ -103,7 +103,12 @@ export class AccidentController {
 
   async getExport(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
-    const tenantId = req.user?.tenantId || 'default'; // Ajustar conforme sua lógica de autenticação
+    
+    // ✅ CORREÇÃO 1: Cast explícito para ler a propriedade 'user' injetada pelo middleware
+    const authenticatedUser = (req as any).user;
+    
+    // ✅ CORREÇÃO 2: Garantir que o tenantId seja sempre uma string única e válida
+    const tenantId = String(authenticatedUser?.tenantId || req.headers['x-tenant-id'] || 'default');
 
     try {
       const exportData = await this.exportAccidentUseCase.execute(id, tenantId);
