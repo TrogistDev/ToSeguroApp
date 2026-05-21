@@ -2,9 +2,9 @@
 FROM node:22.12.0-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
-# Copia o schema do prisma antes para cachear as dependências corretamente
 COPY prisma ./prisma/ 
-RUN npm ci
+# Adicionada a flag para contornar o conflito do mailtrap/nodemailer
+RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
@@ -14,24 +14,20 @@ WORKDIR /app
 
 RUN apk add --no-cache dumb-init
 
-# Criar usuário non-root para segurança
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
 COPY package*.json ./
 
-# Instala dependências de produção e força a geração do Prisma Client
-RUN npm ci --only=production && \
+# Adicionada a flag também na instalação limpa de produção
+RUN npm ci --only=production --legacy-peer-deps && \
     npm cache clean --force
 
-# Copiar build e a pasta do prisma do estágio anterior
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Gerar o Prisma Client nativo dentro do container de produção antes de mudar o owner
 RUN npx prisma generate
 
-# Mudar permissões para o utilizador seguro
 RUN chown -R nodejs:nodejs /app
 
 USER nodejs
