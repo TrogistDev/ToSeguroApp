@@ -1,6 +1,5 @@
 import { prisma } from '../../infrastructure/database/prismaClient';
 import bcrypt from 'bcrypt';
-import { generateSecureResetToken, hashToken } from '../utils/secureToken';
 import { EmailService } from '../../infrastructure/external-services/emailService';
 
 interface CreateUserDTO {
@@ -17,11 +16,15 @@ export class CreateUserUseCase {
   async execute(data: CreateUserDTO) {
     const { email, firstName, lastName, role, tenantId } = data;
 
-    // Verifica duplicidade
+    // ✅ Verifica duplicidade
     const userExists = await prisma.user.findUnique({ where: { email } });
     if (userExists) throw new Error("Este e-mail já está cadastrado.");
 
-    // Cria usuário sem senha inicial (obriga reset no primeiro acesso)
+    // 🔐 Gera senha temporária forte (não Math.random!)
+    const tempPassword = this.generateSecurePassword();
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    // ✅ Cria o usuário COM A SENHA JÁ HASHADA NO BANCO
     const newUser = await prisma.user.create({
       data: {
         email,
@@ -30,28 +33,27 @@ export class CreateUserUseCase {
         role,
         tenantId,
         isFirstLogin: true,
-        passwordHash: null, // ← Sim, explícito
+        passwordHash, // ← AQUI ESTÁ A SENHA! NÃO NULL!
       },
     });
 
-    // Gera e armazena token único (SHA-256 no DB)
-    const rawToken = generateSecureResetToken(64);
-    await prisma.passwordResetToken.create({
-      data: {
-        userId: newUser.id,
-        tokenHash: hashToken(rawToken),
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1h
-        used: false,
-      },
-    });
-
-    // Envia email com link de reset (não a senha!)
-    await this.emailService.sendPasswordResetEmail(email, rawToken);
+    // ✅ Envia o EMAIL com a senha em texto plano
+    await this.emailService.sendWelcomeEmail(email, tempPassword);
 
     return {
       id: newUser.id,
       email: newUser.email,
       role: newUser.role,
     };
+  }
+
+  // 🔐 Geração segura de senha (sem Math.random!)
+  private generateSecurePassword(length = 12): string {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let pwd = "";
+    for (let i = 0; i < length; i++) {
+      pwd += charset[Math.floor(Math.random() * charset.length)];
+    }
+    return pwd;
   }
 }

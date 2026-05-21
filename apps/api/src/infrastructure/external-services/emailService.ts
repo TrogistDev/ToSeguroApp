@@ -1,87 +1,75 @@
 import nodemailer from 'nodemailer';
+import { config } from 'dotenv';
+
+config();
 
 export class EmailService {
-  private transporter: nodemailer.Transporter;
-  private fromEmail: string;
+  private readonly transporter: nodemailer.Transporter;
+  private readonly fromEmail: string;
 
   constructor() {
-    const host = process.env.EMAIL_HOST;
+    const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
     const port = Number(process.env.EMAIL_PORT) || 465;
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_PASS;
-    const from = process.env.EMAIL_FROM;
+    const user = process.env.EMAIL_USER!;
+    const pass = process.env.EMAIL_PASS!;
+    const from = process.env.EMAIL_FROM!;
 
-    // Defesa estrita: Garante que a aplicação não suba sem as variáveis vitais de infraestrutura
-    if (!host || !user || !pass || !from) {
-      throw new Error("❌ EmailService: Variáveis de ambiente de e-mail (EMAIL_HOST, EMAIL_USER, EMAIL_PASS, EMAIL_FROM) não configuradas.");
+    if (!user || !pass || !from) {
+      throw new Error("❌ EMAIL_USER, EMAIL_PASS e EMAIL_FROM são obrigatórios.");
     }
 
     this.fromEmail = from;
-
-    // Inicialização utilizando transporte SMTP universal seguro
+    
     this.transporter = nodemailer.createTransport({
       host,
       port,
-      secure: port === 465, // true para SSL na porta 465, false para STARTTLS na porta 587
-      auth: {
-        user,
-        pass,
-      },
-      tls: {
-        // Proteção contra falhas de handshake em conexões com servidores rigorosos
-        rejectUnauthorized: true,
-      },
+      secure: port === 465,
+      auth: { user, pass },
+      tls: { rejectUnauthorized: true },
     });
-  }
-
-  async sendResetPasswordEmail(to: string, resetToken: string): Promise<boolean> {
-    const url = `${process.env.FRONTEND_URL}/reset-password#token=${resetToken}`;
-
-    try {
-      await this.transporter.sendMail({
-        from: { address: this.fromEmail, name: "Accident System" },
-        to: [to],
-        subject: "Recuperação de Senha - Urgente",
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #334155;">
-            <h1 style="color: #2563eb;">Redefinição de Senha</h1>
-            <p>Você solicitou a alteração de sua senha no Accident System. Clique no link abaixo para prosseguir:</p>
-            <p style="margin: 24px 0;">
-              <a href="${url}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-                Resetar minha senha
-              </a>
-            </p>
-            <p style="font-size: 12px; color: #64748b;">Se você não solicitou isso, ignore este e-mail com segurança.</p>
-          </div>
-        `,
-      });
-      return true;
-    } catch (error) {
-      console.error(`🚨 Falha ao enviar e-mail de reset para ${to}:`, error);
-      return false;
-    }
   }
 
   async sendWelcomeEmail(to: string, tempPassword: string): Promise<boolean> {
     try {
       await this.transporter.sendMail({
         from: { address: this.fromEmail, name: "Accident System" },
-        to: [to],
-        subject: "Bem-vindo ao Sistema de Reportes",
+        to,
+        subject: "Sua senha temporária — ToSeguro",
         html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #334155;">
-            <h1 style="color: #2563eb;">Bem-vindo!</h1>
-            <p>Sua conta foi criada com sucesso na plataforma de auditoria.</p>
-            <p style="background-color: #f1f5f9; padding: 16px; border-radius: 6px; border-left: 4px solid #2563eb;">
-              <strong>Sua senha temporária é:</strong> <code style="font-size: 16px; color: #0f172a;">${tempPassword}</code>
-            </p>
-            <p>Por favor, altere sua senha imediatamente no seu primeiro acesso.</p>
+          <div style="font-family: sans-serif; max-width: 600px; margin: auto;">
+            <h2>🔐 Bem-vindo ao ToSeguro!</h2>
+            <p>Sua conta foi criada com sucesso.</p>
+            <div style="background:#f1f5f9;padding:16px;border-radius:8px;margin:16px 0;">
+              <strong>Sua senha temporária é:</strong><br/>
+              <code style="display:block;font-size:20px;color:#dc2626;background:white;padding:12px;">
+                ${tempPassword}
+              </code>
+            </div>
+            <p>Use essa senha para seu primeiro login. Depois, você pode alterá-la.</p>
           </div>
         `,
       });
+      console.log(`📧 Email enviado com sucesso para ${to}`);
       return true;
-    } catch (error) {
-      console.error(`🚨 Falha ao enviar e-mail de boas-vindas para ${to}:`, error);
+    } catch (err) {
+      console.error("🚨 Erro ao enviar email:", err);
+      return false;
+    }
+  }
+
+  // Opcional: método futuro para reset
+  async sendPasswordResetEmail(to: string, resetToken: string): Promise<boolean> {
+    const url = `${process.env.FRONTEND_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
+    try {
+      await this.transporter.sendMail({
+        from: { address: this.fromEmail, name: "Accident System" },
+        to,
+        subject: "Redefinição de Senha",
+        html: `<p>Clique para redefinir: <a href="${url}">${url}</a></p>`,
+      });
+      return true;
+    } catch (err) {
+      console.error("📧 Erro no reset:", err);
       return false;
     }
   }

@@ -3,6 +3,8 @@ import { prisma } from '../database/prismaClient';
 import { tenantStorage } from '../../core/context/TenantContext';
 import { CreateAccidentDto } from '../../interface-adapters/dtos/AccidentDto';
 
+
+
 export class AccidentRepository {
   
   // MÉTODO DE CRIAÇÃO (Isolamento via AsyncLocalStorage e Tipagem Estrita)

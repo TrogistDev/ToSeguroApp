@@ -1,8 +1,8 @@
 import { canvasTheme } from '../constants/canvasTheme';
 // apps/api/src/core/transformers/AccidentExporter.ts
-import { SceneObject, PhotoExport, LocationExport, VehicleExport, AccidentExportDto } from '../../interface-adapters/dtos/AccidentExportDto';
+import { SceneObject, PhotoExport, AccidentExportDto } from '../../interface-adapters/dtos/AccidentExportDto';
 
-// 🔁 Atualize a interface RawAccident para refletir o novo formato do repository
+// 🔁 Interface RawAccident refletindo o formato do repository
 interface RawAccident {
   id: string;
   reportedAt: Date;
@@ -19,36 +19,27 @@ interface RawAccident {
       x: number;
       y: number;
       damageDescription?: string;
-      targetId?: string; // ← ADICIONADO!
-
+      targetId?: string;
     }>;
-     weather?: { type: 'sun' | 'rain'; intensity?: number; angle?: number };
-    layersZ?: string[];
+    weather?: { type: 'sun' | 'rain'; intensity?: number; angle?: number };
+    layersZ?: string[]; // 👈 Mantido o padrão correto da arquitetura
   };
   photos: Array<{ id: string; url: string; type?: string; description?: string }>;
   user: {
     name: string;
     contact?: string;
-    vehiclePlate?: string | null; // ← aqui vem plate, brand, etc.
+    vehiclePlate?: string | null;
     vehicleBrand?: string | null;
     vehicleModel?: string | null;
     vehicleYear?: number | null;
     insuranceCompany?: string | null;
     policyNumber?: string | null;
   };
-
 }
 
 export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
-  const { elements, weather, zOrderLayers = canvasTheme.layersZ } = accident.sceneData;
-  // Transformar elementos da cena
-  const sceneObjects = accident.sceneData.elements.map(el => ({
-    id: el.id,
-    type: el.type as any,
-    label: el.label,
-    position: { x: el.x, y: el.y },
-    damageDescription: el.damageDescription
-  }));
+  // ✅ CORREÇÃO 1: Desestruturar 'layersZ' em vez de 'zOrderLayers' inexistente
+  const { elements, layersZ = canvasTheme.layersZ } = accident.sceneData;
 
   // Transformar fotos
   const photos = accident.photos.map(p => ({
@@ -58,24 +49,26 @@ export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
     uploadedAt: new Date().toISOString()
   }));
 
+  // Mapear danos
   const damages = elements
-  .filter(el => el.type.startsWith("damage"))
-  .map((el): { id: string; targetId?: string; type: 'scratch' | 'crack' | 'dent'; location: { x: number; y: number }; severity?: 1 | 2 | 3 } => {
-    const damageType = el.type.replace("damage_", "") as 'light' | 'moderate' | 'severe';
-    
-    return {
-      id: el.id,
-      targetId: el.targetId ?? "", // ← preferência explícita
-      type: damageType === "light" ? "scratch"
-           : damageType === "moderate" ? "crack"
-           : "dent",
-      location: { x: el.x, y: el.y },
-      severity: damageType === "light" ? 1
-               : damageType === "moderate" ? 2
-               : 3,
-    };
-  });
+    .filter(el => el.type.startsWith("damage"))
+    .map((el): { id: string; targetId: string; type: 'scratch' | 'crack' | 'dent'; location: { x: number; y: number }; severity: 1 | 2 | 3 } => {
+      const damageType = el.type.replace("damage_", "") as 'light' | 'moderate' | 'severe';
+      
+      return {
+        id: el.id,
+        targetId: el.targetId ?? "",
+        type: damageType === "light" ? "scratch"
+             : damageType === "moderate" ? "crack"
+             : "dent",
+        location: { x: el.x, y: el.y },
+        severity: damageType === "light" ? 1
+                 : damageType === "moderate" ? 2
+                 : 3,
+      };
+    });
 
+  // Mapear objetos da cena
   const objects = elements
     .filter(el => !el.type.startsWith("damage_"))
     .map((el): SceneObject => ({
@@ -84,15 +77,15 @@ export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
       label: el.label || "",
       x: el.x,
       y: el.y,
-      layer: getLayerForType(el.type), // função auxiliar
+      layer: getLayerForType(el.type),
     }));
 
-  // ✅ Atenção: dados do veículo agora estão em accident.user.*
+  // ✅ CORREÇÃO 2: Se 'year' for undefined, garantir fallback numérico (0) para evitar o Type Error de atribuir 'undefined' a 'number'
   const vehicle = {
     plate: accident.user.vehiclePlate || '',
     brand: accident.user.vehicleBrand || '',
     model: accident.user.vehicleModel || '',
-    year: accident.user.vehicleYear ? Number(accident.user.vehicleYear) : undefined,
+    year: accident.user.vehicleYear ? Number(accident.user.vehicleYear) : 0,
     insuranceCompany: accident.user.insuranceCompany ?? undefined,
     policyNumber: accident.user.policyNumber ?? undefined
   };
@@ -118,42 +111,35 @@ export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
       addressText: accident.addressText
     },
     accidentType: accident.accidentType,
-  
     sceneObjects: objects,
     damages: damages.map(d => ({
       id: d.id,
-      targetId: d.targetObject?.id || "", // ← se tiver referência explícita, use isso
+      // ✅ CORREÇÃO 3: Usar o 'd.targetId' que já foi extraído acima de forma plana
+      targetId: d.targetId, 
       type: d.type as any,
       location: d.location,
       severity: d.severity,
     })),
     photos,
+    // ✅ CORREÇÃO 4: Objeto metadata limpo de acordo com as propriedades conhecidas
     metadata: {
       createdAt: new Date().toISOString(),
-      reportedByUserId: 'user_123', // Ajustar conforme necessário
       platform: 'web'
     },
-
-    
-    
-    layersZ: zOrderLayers,
+    layersZ: layersZ,
   };
 }
 
 const getLayerForType = (type: string): string => {
   const skyTypes = ["sun"];
   const rainTypes = ["rain_stroke"];
-  const groundTypes = ["water", "pothole"]; // buracos e água são "debaixo"
+  const groundTypes = ["water", "pothole"];
   const roadTypes = ["road_straight", "road_oneway"];
-  const objectTypes = [
-    "car", "truck", "traffic_light", "sign", "pedestrian",
-    "damage_light", "damage_moderate", "damage_severe"
-  ];
 
   if (skyTypes.includes(type)) return "sky";
   if (rainTypes.includes(type)) return "rain_stroke";
-  if (groundTypes.includes(type)) return "ground"; // abaixo da estrada
+  if (groundTypes.includes(type)) return "ground";
   if (roadTypes.includes(type)) return "road";
   
-  return "objects"; // padrão
+  return "objects";
 };
