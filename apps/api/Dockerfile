@@ -3,7 +3,6 @@ FROM node:22.12.0-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/ 
-# Adicionada a flag para contornar o conflito do mailtrap/nodemailer
 RUN npm ci --legacy-peer-deps
 COPY . .
 ENV DATABASE_URL="postgresql://mock_user:mock_pass@localhost:5432/mock_db?schema=public"
@@ -12,6 +11,7 @@ RUN npx prisma generate --schema=./prisma/schema.prisma
 RUN echo '{"type": "commonjs"}' > ./src/infrastructure/database/generated-client/package.json
 RUN npm run build
 RUN cp -r ./src/infrastructure/database/generated-client ./dist/infrastructure/database/generated-client
+
 # Runtime stage
 FROM node:22.12.0-alpine
 WORKDIR /app
@@ -23,14 +23,16 @@ RUN addgroup -g 1001 -S nodejs && \
 
 COPY package*.json ./
 
-# Adicionada a flag também na instalação limpa de produção
 RUN npm ci --only=production --legacy-peer-deps && \
     npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
+# ✅ DEFENSA DE RUNTIME: Copia o .env gerado na VPS para dentro do container de produção
+COPY .env* ./ 
 
+# Garante que o utilizador nodejs é dono do .env também para conseguir lê-lo
 RUN chown -R nodejs:nodejs /app
 
 USER nodejs
