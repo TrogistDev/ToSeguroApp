@@ -8,6 +8,8 @@ services:
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
     container_name: accident_frontend
     restart: always
+    env_file:              # <--- ADICIONA ISTO
+      - .env
     ports:
       - "3001:3001"
     depends_on:
