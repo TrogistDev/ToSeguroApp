@@ -13,31 +13,38 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Deploy to AWS EC2 via SSH
+     - name: Deploy to AWS EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.AWS_HOST }}
-          username: ubuntu
-          key: ${{ secrets.AWS_PRIVATE_KEY }}
-          port: 22
-          script_stop: true
+          host: ${{ secrets.INPUT_HOST }}
+          username: ${{ secrets.INPUT_USERNAME }}
+          key: ${{ secrets.INPUT_KEY }}
+          script_stop: true # Força o cancelamento imediato se qualquer comando falhar
           script: |
-            # 1. Garantir que o Docker Compose está instalado na máquina virtual (Abordagem Rígida)
+            # 1. Garantir que o Docker Compose está instalado na máquina virtual
             if ! command -v docker-compose &> /dev/null; then
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
               sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
             fi
 
-            # 2. Limpar ambiente antigo
-            rm -rf ToSeguroApp
-            
-            # 3. Clonar o repositório de forma limpa
+            # 2. Parar os containers antes de apagar a pasta (Evita travar volumes e descritores de rede)
+            if [ -d "ToSeguroApp/apps" ]; then
+              cd ToSeguroApp/apps
+              docker-compose down || true
+              cd ../..
+            fi
+
+            # 3. Limpeza ultra-agressiva para matar o bug de refs do Git
+            # Força a sincronização do sistema de arquivos para garantir que os inodes antigos foram libertados
+            sudo rm -rf ToSeguroApp
+            sync
+
+            # 4. Clonar o repositório utilizando uma abordagem limpa
             git clone https://github.com/TrogistDev/ToSeguroApp.git ToSeguroApp
-            
-            # 4. Entrar na pasta correta da arquitetura
+
+            # 5. Entrar na pasta correta da arquitetura
             cd ToSeguroApp/apps
 
-            # 5. Orquestrar os containers com o binário garantido
-            docker-compose down || true
+            # 6. Orquestrar os containers com o binário garantido
             docker-compose up --build -d
