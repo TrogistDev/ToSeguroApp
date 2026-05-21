@@ -104,13 +104,23 @@ export class AccidentController {
   async getExport(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     
+    // ✅ DEFESA RÍGIDA: Cláusula de barreira para garantir que o ID existe e é uma string válida
+    if (!id || typeof id !== 'string') {
+      res.status(400).json({ error: 'O ID do acidente é obrigatório e deve ser uma string válida.' });
+      return;
+    }
+    
     // ✅ CORREÇÃO 1: Cast explícito para ler a propriedade 'user' injetada pelo middleware
     const authenticatedUser = (req as any).user;
     
-    // ✅ CORREÇÃO 2: Garantir que o tenantId seja sempre uma string única e válida
-    const tenantId = String(authenticatedUser?.tenantId || req.headers['x-tenant-id'] || 'default');
+    // ✅ CORREÇÃO 2: Conversão e fallback seguro para o tenantId
+    const tenantHeader = req.headers['x-tenant-id'];
+    const tenantId = typeof tenantHeader === 'string' 
+      ? tenantHeader 
+      : (Array.isArray(tenantHeader) ? tenantHeader[0] : String(authenticatedUser?.tenantId || 'default'));
 
     try {
+      // Agora o compilador sabe que 'id' é estritamente uma string e o erro some!
       const exportData = await this.exportAccidentUseCase.execute(id, tenantId);
       res.status(200).json(exportData);
     } catch (error) {

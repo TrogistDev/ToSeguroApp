@@ -3,7 +3,19 @@ import { prisma } from '../database/prismaClient';
 import { tenantStorage } from '../../core/context/TenantContext';
 import { CreateAccidentDto } from '../../interface-adapters/dtos/AccidentDto';
 
-
+// Interface estrita para mapear a estrutura do JSON guardado na base de dados
+interface PrismaSceneData {
+  background?: { width: number; height: number };
+  elements?: Array<{
+    id: string;
+    type: string;
+    label: string;
+    x: number;
+    y: number;
+    damageDescription?: string;
+    targetId?: string;
+  }>;
+}
 
 export class AccidentRepository {
   
@@ -79,59 +91,60 @@ export class AccidentRepository {
     });
   }
 
-async findByIdWithDetails(id: string): Promise<any> {
-  const context = tenantStorage.getStore();
-  if (!context) {
-    throw new Error("Contexto de Tenant ausente na busca por ID.");
+  async findByIdWithDetails(id: string): Promise<any> {
+    const context = tenantStorage.getStore();
+    if (!context) {
+      throw new Error("Contexto de Tenant ausente na busca por ID.");
+    }
+
+    try {
+      // ✅ Removido 'vehicle', pois Accident não tem esse relacionamento
+      const accident = await prisma.accident.findUnique({
+        where: { id },
+        include: {
+          user: true, // ✅ OK (User existe no schema)
+          photos: true, // ✅ OK (AccidentPhoto existe)
+        },
+      });
+      
+      if (!accident) return null;
+
+      // ✅ CORREÇÃO RÍGIDA: Cast seguro do Json nativo do Prisma para a nossa interface estruturada
+      const rawSceneData = accident.sceneData as unknown as PrismaSceneData;
+
+      const sceneData = {
+        background: rawSceneData?.background || { width: 800, height: 600 },
+        elements: rawSceneData?.elements || [],
+      };
+
+      // ✅ Inclua os dados do veículo diretamente do User (que é onde eles estão)
+      return {
+        id: accident.id,
+        reportedAt: accident.createdAt,
+        accidentType: accident.accidentType,
+        locationLat: accident.locationLat,
+        locationLng: accident.locationLng,
+        addressText: accident.addressText,
+        sceneData,
+        // ✅ CORREÇÃO: Parâmetro 'p' explicitamente tipado
+        photos: accident.photos.map((p: { id: string; url: string; type?: string; description?: string }) => ({
+          id: p.id,
+          url: p.url,
+          type: p.type || undefined,
+          description: p.description || undefined
+        })),
+        user: {
+          name: `${accident.user.firstName || ''} ${accident.user.lastName || ''}`.trim() || 'Anônimo',
+          contact: accident.user.email,
+          vehiclePlate: accident.user.vehiclePlate || '',
+          vehicleBrand: accident.user.vehicleBrand || '',
+          vehicleModel: accident.user.vehicleModel || '',
+          vehicleYear: accident.user.vehicleYear ? Number(accident.user.vehicleYear) : undefined
+        }
+      };
+    } catch (error) {
+      console.error("❌ ERRO em findByIdWithDetails:", error);
+      throw new Error("Falha ao buscar acidente com detalhes.");
+    }
   }
-
-  try {
-    // ✅ Removido 'vehicle', pois Accident não tem esse relacionamento
-    const accident = await prisma.accident.findUnique({
-      where: { id },
-      include: {
-        user: true, // ✅ OK (User existe no schema)
-        photos: true, // ✅ OK (AccidentPhoto existe)
-      },
-    });
-    
-
-    if (!accident) return null;
-
-    const sceneData = {
-      background: accident.sceneData?.background || { width: 800, height: 600 },
-      elements: accident.sceneData?.elements || [],
-    };
-
-    // ✅ Inclua os dados do veículo diretamente do User (que é onde eles estão)
-    return {
-      id: accident.id,
-      reportedAt: accident.createdAt,
-      accidentType: accident.accidentType,
-      locationLat: accident.locationLat,
-      locationLng: accident.locationLng,
-      addressText: accident.addressText,
-      sceneData,
-      photos: accident.photos.map((p: any) => ({
-        id: p.id,
-        url: p.url,
-        type: p.type || undefined,
-        description: p.description || undefined
-      })),
-      user: {
-        name: `${accident.user.firstName} ${accident.user.lastName}`.trim() || 'Anônimo',
-        contact: accident.user.email,
-        vehiclePlate: accident.user.vehiclePlate || '',
-        vehicleBrand: accident.user.vehicleBrand || '',
-        vehicleModel: accident.user.vehicleModel || '',
-        vehicleYear: accident.user.vehicleYear ? Number(accident.user.vehicleYear) : undefined
-      }
-    };
-  } catch (error) {
-    console.error("❌ ERRO em findByIdWithDetails:", error);
-    throw new Error("Falha ao buscar acidente com detalhes.");
-  }
-}
-
-
 }
