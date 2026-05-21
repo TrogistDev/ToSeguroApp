@@ -6,6 +6,8 @@ COPY prisma ./prisma/
 # Adicionada a flag para contornar o conflito do mailtrap/nodemailer
 RUN npm ci --legacy-peer-deps
 COPY . .
+ENV DATABASE_URL="postgresql://mock_user:mock_pass@localhost:5432/mock_db?schema=public"
+
 RUN npx prisma generate --schema=./prisma/schema.prisma
 RUN npm run build
 
