@@ -10,7 +10,7 @@ import { authMiddleware } from "./interface-adapters/middlewares/authMiddleware"
 import { tenantMiddleware } from "./interface-adapters/middlewares/tenantMiddleware";
 import { AccidentController } from "./interface-adapters/controllers/AccidentController";
 import { AccidentRepository } from "./infrastructure/repositories/AccidentRepository";
-import { ExportAccidentUseCase } from "../src/core/use-cases/ExportAccidentUseCase";
+import { ExportAccidentUseCase } from "../src/core/use-cases/ExportAccidentUseCase.js";
 import { AuthController } from "./interface-adapters/controllers/AuthControllers"; // <-- Corrigido para o singular 'AuthController'
 console.log("🔍 Verificando Variáveis AWS:", {
   region: process.env.AWS_REGION,

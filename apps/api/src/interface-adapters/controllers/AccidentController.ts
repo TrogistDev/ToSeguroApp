@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AccidentRepository } from "../../infrastructure/repositories/AccidentRepository";
 
 import { S3Service } from "../../infrastructure/aws/s3Service";
-import { ExportAccidentUseCase } from "../../core/use-cases/ExportAccidentUseCase";
+import { ExportAccidentUseCase } from "../../core/use-cases/ExportAccidentUseCase.js";
 
 const accidentRepo = new AccidentRepository();
 
