@@ -25,12 +25,14 @@ jobs:
             # 1. Limpar ambiente antigo
             rm -rf ToSeguroApp
             
-            # 2. Clonar o repositório atualizado
+            # 2. Clonar o repositório de forma limpa
             git clone https://github.com/TrogistDev/ToSeguroApp.git ToSeguroApp
             
-            # 3. Entrar na pasta do Docker Compose
+            # 3. Entrar na pasta correta da arquitetura
             cd ToSeguroApp/apps
 
-            # 4. Executar os comandos usando o caminho real do binário do sistema (/bin/docker)
-            sudo -E /bin/docker compose down --remove-orphans
-            sudo -E /bin/docker compose up --build -d
+            # 4. Parar serviços antigos (Sintaxe compatível)
+            docker compose down || true
+            
+            # 5. Buildar e subir os containers (Postgres, Redis, Frontend)
+            docker compose up --build --remove-orphans -d
