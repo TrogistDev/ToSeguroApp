@@ -28,7 +28,27 @@ app.use(
     crossOriginEmbedderPolicy: false,
   }),
 );
-app.use(cors({ origin: "http://localhost:5173" }));
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3001",
+  "http://13.60.56.153:3001",
+  "http://ec2-13-60-56-153.eu-north-1.compute.amazonaws.com:3001"
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permite requisições sem origem (como mobile apps ou ferramentas de teste como Postman/Curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Bloqueado por política estrita de CORS do ToSeguro"));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
 // --- Rotas Públicas (Abertas) ---
