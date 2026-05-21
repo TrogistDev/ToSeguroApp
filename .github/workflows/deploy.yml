@@ -22,7 +22,7 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            # 1. Garantir um ambiente 100% limpo na nuvem (Evita repositórios corrompidos)
+            # 1. Garantir um ambiente 100% limpo na nuvem
             sudo rm -rf ToSeguroApp
             
             # 2. Clonar o repositório atualizado de forma limpa
@@ -31,6 +31,6 @@ jobs:
             # 3. Entrar na pasta onde está o Docker Compose
             cd ToSeguroApp/apps
 
-            # 4. Executar o deploy usando o Docker do sistema
-            sudo docker compose down --remove-orphans
-            sudo docker compose up --build -d
+            # 4. Executar o deploy chamando o caminho absoluto do binário via sudo
+            sudo /usr/bin/docker compose down --remove-orphans
+            sudo /usr/bin/docker compose up --build -d
