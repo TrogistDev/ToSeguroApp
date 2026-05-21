@@ -1,0 +1,89 @@
+{
+  "common": {
+    "next": "Siguiente",
+    "back": "Volver",
+    "finish": "Finalizar reporte",
+    "continue": "Continuar",
+    "submit": "Enviar",
+    "loading": "Cargando...",
+    "orSeparator": "O",
+    "placeholderName": "Su nombre",
+    "placeholderLastName": "Apellido",
+    "placeholderPlate": "ABC-1234",
+    "placeholderBrand": "Toyota",
+    "placeholderModel": "Corolla",
+    "placeholderYear": "2020"
+  },
+  "error": {
+    "required": "Este campo es obligatorio",
+    "invalidEmail": "Correo electrónico inválido",
+    "generic": "Ocurrió un error inesperado. Inténtalo de nuevo.",
+    "missingFields": "Por favor, complete todos los campos obligatorios."
+  },
+  "steps": {
+    "personalData": {
+      "title": "Datos del incidente",
+      "subtitle": "Ingresa la información básica para registrar el siniestro.",
+      "fullNameLabel": "Nombre",
+      "lastNameLabel": "Apellido",
+      "accidentTypeLabel": "Tipo de accidente",
+      "addressLabel": "Dirección",
+      "selectOption": "Seleccionar",
+      "options": {
+        "colisao": "Colisión",
+        "capotamento": "Capotamiento",
+        "atropelamento": "Atropello",
+        "queda": "Caída",
+        "outro": "Otro"
+      }
+    },
+    "photos": {
+      "title": "Subida de fotos",
+      "subtitle": "Agrega imágenes del lugar del siniestro para complementar el registro.",
+      "uploadLabel": "Subir imágenes",
+      "uploading": "Cargando archivo...",
+      "photoPreview": "Foto del siniestro"
+    },
+    "finalize": {
+      "title": "Resumen y confirmación",
+      "subtitle": "Revisa tus datos y finaliza el envío del reporte de siniestro.",
+      "sceneLabel": "Escena del accidente"
+    }
+  },
+  "form": {
+    "stepIndicator": "Paso {{current}} de {{total}}"
+  },
+  "dashboard": {
+    "title": "Panel Administrativo",
+    "subtitle": "Gestión de accesos y auditoría de siniestros para su organización.",
+    "btnInviteUser": "➕ Pre-autorizar Usuario",
+    "tableTitle": "Historial de Ocurrencias Recibidas",
+    "columns": {
+      "driver": "Conductor",
+      "type": "Tipo",
+      "address": "Dirección",
+      "date": "Fecha"
+    },
+    "emptyState": "No hay siniestros registrados en este tenant aún.",
+    "exportBtn": "📥 Descargar JSON",
+    "modalTitle": "Pre-autorizar Correo",
+    "fields": {
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Correo Corporativo",
+      "role": "Nivel de Acceso (Rol)"
+    },
+    "roles": {
+      "USER": "USUARIO (Solo envía reportes del vehículo)",
+      "ADMIN": "ADMINISTRADOR (Gestiona accesos y ve todo)"
+    },
+    "btnConfirm": "Confirmar Permiso",
+    "successTitle": "¡Éxito!",
+    "errorGeneric": "Error al crear usuario.",
+    "modalClose": "Cerrar"
+  },
+  "languageSelector": {
+    "es": "Español",
+    "en-us": "Inglés"
+  }
+}

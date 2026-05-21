@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface StepPhotosProps {
   isUploading: boolean;
@@ -19,19 +20,17 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({
   onBack,
   onNext,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Envio de fotos</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Adicione imagens do local do sinistro para complementar o registro.
-        </p>
+        <h2 className="text-lg font-semibold text-slate-900">{t("steps.photos.title")}</h2>
+        <p className="mt-1 text-sm text-slate-600">{t("steps.photos.subtitle")}</p>
       </div>
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">
-          Upload de imagens
-        </span>
+        <span className="text-sm font-medium text-slate-700">{t("steps.photos.uploadLabel")}</span>
         <input
           type="file"
           accept="image/*"
@@ -42,7 +41,7 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({
 
       {isUploading && (
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-          Enviando arquivo...
+          {t("steps.photos.uploading")}
         </div>
       )}
 
@@ -54,7 +53,7 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({
           >
             <img
               src={signedPhotoUrls[photoUrl] || photoUrl}
-              alt="Foto do sinistro"
+              alt={t("steps.photos.photoPreview")}
               className="h-36 w-full object-cover"
             />
           </div>
@@ -67,7 +66,7 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({
           onClick={onBack}
           className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
-          Voltar
+          {t("common.back")}
         </button>
 
         <button
@@ -75,7 +74,7 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({
           onClick={onNext}
           className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
         >
-          Próximo
+          {t("common.next")}
         </button>
       </div>
     </div>

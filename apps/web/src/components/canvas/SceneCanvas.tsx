@@ -67,7 +67,7 @@ export const SceneCanvas: React.FC = () => {
           }
         }}
       >
-            <Layer>
+            <Layer  >
               {background && (
                 <RoadElement
                   type={background}

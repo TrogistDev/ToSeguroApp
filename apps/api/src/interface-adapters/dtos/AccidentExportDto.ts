@@ -62,11 +62,7 @@ export interface AccidentExportDto {
     possibleFault?: string[]; // Ex: ["Motorista A", "Semáforo quebrado"]
   };
 
-  weather?: {
-    type: 'sun' | 'rain';
-    intensity?: number;
-    angle?: number;
-  };
+
   
   layersZ: string[]; // ordem das camadas
   
@@ -84,9 +80,5 @@ export interface AccidentExportDto {
   metadata: { createdAt: string; platform: string };
 
   // Opcional: metadados adicionais
-   additionalInfo: {
-    weather?: string; // legível: "Ensolarado", "Chuva leve"
-    roadCondition: string;
-    witnesses: Array<{ name: string; contact: string }>;
-  };
+
 }

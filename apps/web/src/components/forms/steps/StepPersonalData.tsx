@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface StepPersonalDataProps {
   formData: any;
@@ -21,65 +22,61 @@ export const StepPersonalData: React.FC<StepPersonalDataProps> = ({
   handleSelectAddress,
   onNext,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-4 animate-in fade-in duration-200">
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
-          Dados da ocorrência
-        </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Insira as informações básicas para registrar o sinistro.
-        </p>
+        <h2 className="text-lg font-semibold text-slate-900">{t("steps.personalData.title")}</h2>
+        <p className="mt-1 text-sm text-slate-600">{t("steps.personalData.subtitle")}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Nome</span>
+          <span className="text-sm font-medium text-slate-700">{t("steps.personalData.fullNameLabel")}</span>
           <input
             className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
             value={formData.fullName || ""}
-            onChange={(event) =>
-              updateFormData({ fullName: event.target.value })
-            }
-            placeholder="Seu nome"
+            onChange={(event) => updateFormData({ fullName: event.target.value })}
+            placeholder={t("common.placeholderName")}
           />
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Sobrenome</span>
+          <span className="text-sm font-medium text-slate-700">{t("steps.personalData.lastNameLabel")}</span>
           <input
             className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
             value={formData.lastName || ""}
-            onChange={(event) =>
-              updateFormData({ lastName: event.target.value })
-            }
-            placeholder="Sobrenome"
+            onChange={(event) => updateFormData({ lastName: event.target.value })}
+            placeholder={t("common.placeholderLastName")}
           />
         </label>
       </div>
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">
-          Tipo de acidente
-        </span>
+        <span className="text-sm font-medium text-slate-700">{t("steps.personalData.accidentTypeLabel")}</span>
         <select
           className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
           value={formData.accidentType || ""}
-          onChange={(event) =>
-            updateFormData({ accidentType: event.target.value })
-          }
+          onChange={(event) => updateFormData({ accidentType: event.target.value })}
         >
-          <option value="">Selecione</option>
-          <option value="colisão">Colisão</option>
-          <option value="capotamento">Capotamento</option>
-          <option value="atropelamento">Atropelamento</option>
-          <option value="queda">Queda</option>
-          <option value="outro">Outro</option>
+          <option value="">{t("steps.personalData.selectOption")}</option>
+          {[
+            "colisão",
+            "capotamento",
+            "atropelamento",
+            "queda",
+            "outro"
+          ].map((opt) => (
+            <option key={opt} value={opt}>
+              {t(`steps.personalData.options.${opt.replace(/\s+/g, '_')}`)}
+            </option>
+          ))}
         </select>
       </label>
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-700">Endereço</span>
+        <span className="text-sm font-medium text-slate-700">{t("steps.personalData.addressLabel")}</span>
         <input
           className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:bg-white"
           value={addressInput}
@@ -109,7 +106,7 @@ export const StepPersonalData: React.FC<StepPersonalDataProps> = ({
           onClick={onNext}
           className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-700"
         >
-          Continuar
+          {t("common.continue")}
         </button>
       </div>
     </div>

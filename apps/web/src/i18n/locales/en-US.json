@@ -1,0 +1,89 @@
+{
+  "common": {
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish Report",
+    "continue": "Continue",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "orSeparator": "Or",
+    "placeholderName": "Your name",
+    "placeholderLastName": "Last name",
+    "placeholderPlate": "ABC-1234",
+    "placeholderBrand": "Toyota",
+    "placeholderModel": "Corolla",
+    "placeholderYear": "2020"
+  },
+  "error": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "generic": "An unexpected error occurred. Please try again.",
+    "missingFields": "Please fill in all required fields."
+  },
+  "steps": {
+    "personalData": {
+      "title": "Incident Details",
+      "subtitle": "Enter the basic information to register the claim.",
+      "fullNameLabel": "First Name",
+      "lastNameLabel": "Last Name",
+      "accidentTypeLabel": "Accident Type",
+      "addressLabel": "Address",
+      "selectOption": "Select",
+      "options": {
+        "colisao": "Collision",
+        "capotamento": "Rollover",
+        "atropelamento": "Hit-and-run",
+        "queda": "Fall",
+        "outro": "Other"
+      }
+    },
+    "photos": {
+      "title": "Photo Upload",
+      "subtitle": "Add images of the incident location to complement your report.",
+      "uploadLabel": "Upload Images",
+      "uploading": "Uploading file...",
+      "photoPreview": "Incident Photo"
+    },
+    "finalize": {
+      "title": "Summary & Confirmation",
+      "subtitle": "Review your data and finalize the claim submission.",
+      "sceneLabel": "Scene Overview"
+    }
+  },
+  "form": {
+    "stepIndicator": "Step {{current}} of {{total}}"
+  },
+  "dashboard": {
+    "title": "Administrative Dashboard",
+    "subtitle": "Access management & audit of claims for your organization.",
+    "btnInviteUser": "➕ Pre-authorize User",
+    "tableTitle": "Received Incident History",
+    "columns": {
+      "driver": "Driver",
+      "type": "Type",
+      "address": "Address",
+      "date": "Date"
+    },
+    "emptyState": "No incidents recorded in this tenant yet.",
+    "exportBtn": "📥 Download JSON",
+    "modalTitle": "Pre-authorize Email",
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Corporate Email",
+      "role": "Access Level (Role)"
+    },
+    "roles": {
+      "USER": "USER (Only submits vehicle reports)",
+      "ADMIN": "ADMIN (Manages access & sees everything)"
+    },
+    "btnConfirm": "Confirm Permission",
+    "successTitle": "Success!",
+    "errorGeneric": "Failed to create user.",
+    "modalClose": "Close"
+  },
+  "languageSelector": {
+    "es": "Spanish",
+    "en-us": "English"
+  }
+}

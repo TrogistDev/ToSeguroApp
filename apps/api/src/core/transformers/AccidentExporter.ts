@@ -19,7 +19,11 @@ interface RawAccident {
       x: number;
       y: number;
       damageDescription?: string;
+      targetId?: string; // ← ADICIONADO!
+
     }>;
+     weather?: { type: 'sun' | 'rain'; intensity?: number; angle?: number };
+    layersZ?: string[];
   };
   photos: Array<{ id: string; url: string; type?: string; description?: string }>;
   user: {
@@ -32,6 +36,7 @@ interface RawAccident {
     insuranceCompany?: string | null;
     policyNumber?: string | null;
   };
+
 }
 
 export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
@@ -53,32 +58,21 @@ export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
     uploadedAt: new Date().toISOString()
   }));
 
-   // Separar elementos por tipo (para identificar danos vs objetos)
-  const damages = elements.filter(el => el.type.startsWith("damage")).map((el) => {
-    // 🎯 Busca o objeto mais próximo (ou o alvo diretamente, se houver referência)
-    // Como você arrasta o dano sobre o objeto, a posição visual é a mesma do objeto alvo
-    // Mas precisamos saber: qual é o `targetId` desse dano?
-
-    // Se não há referência explícita (`damage.targetId`), use lógica de proximidade:
-    const targetObject = objects.find(obj => {
-      const dx = Math.abs(el.x - obj.x);
-      const dy = Math.abs(el.y - obj.y);
-      return dx < 30 && dy < 30; // tolerância visual: até 30px
-    });
-
-    const centerX = (el.width || 30) / 2; // half-width do dano
-    const centerY = (el.height || 30) / 2; // half-height do dano
-
-    // ✅ Centraliza o dano sobre o objeto alvo:
+  const damages = elements
+  .filter(el => el.type.startsWith("damage"))
+  .map((el): { id: string; targetId?: string; type: 'scratch' | 'crack' | 'dent'; location: { x: number; y: number }; severity?: 1 | 2 | 3 } => {
+    const damageType = el.type.replace("damage_", "") as 'light' | 'moderate' | 'severe';
+    
     return {
       id: el.id,
-      type: "damage" as const,
-      label: "",
-      location: {
-        x: targetObject ? targetObject.x + (targetObject.width / 2) - centerX : el.x,
-        y: targetObject ? targetObject.y + (targetObject.height / 2) - centerY : el.y,
-      },
-      severity: 1, // ou inferir de `el.metadata?.severity`
+      targetId: el.targetId ?? "", // ← preferência explícita
+      type: damageType === "light" ? "scratch"
+           : damageType === "moderate" ? "crack"
+           : "dent",
+      location: { x: el.x, y: el.y },
+      severity: damageType === "light" ? 1
+               : damageType === "moderate" ? 2
+               : 3,
     };
   });
 
@@ -124,7 +118,7 @@ export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
       addressText: accident.addressText
     },
     accidentType: accident.accidentType,
-    sceneSummary: 'Veículos colidiram frontalmente em cruzamento sem semáforo',
+  
     sceneObjects: objects,
     damages: damages.map(d => ({
       id: d.id,
@@ -140,20 +134,9 @@ export function accidentToExportDto(accident: RawAccident): AccidentExportDto {
       platform: 'web'
     },
 
-    weather: {
-      type: accident.sceneData.weather?.type ?? "sun",
-      intensity: accident.sceneData.weather?.intensity ?? 0.5,
-      angle: accident.sceneData.weather?.angle ?? -25,
-    },
+    
     
     layersZ: zOrderLayers,
-    additionalInfo: {
-      weather: 'Ensolarado',
-      roadCondition: 'Seca',
-      witnesses: [
-        { name: 'Maria Oliveira', contact: '+5511988888888' } // Exemplo fixo
-      ]
-    }
   };
 }
 

@@ -6,8 +6,12 @@ import { getCanvasDimensions } from "../constants/CanvasMetrics";
 export const useSceneCanvas = () => {
   const { updateFormData, formData } = useReportStore();
   const { width, height } = getCanvasDimensions(window.innerWidth);
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 500 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState(() => {
+  // ✅ Calcula no primeiro render (evita flash)
+  const { width, height } = getCanvasDimensions(window.innerWidth);
+  return { width, height };
+});
 
   const [background, setBackground] = useState<SceneObjectType | null>(
     formData.sceneData?.background || null,
@@ -24,26 +28,20 @@ export const useSceneCanvas = () => {
       if (formData.sceneData.elements) setElements(formData.sceneData.elements);
     }
   }, [formData?.sceneData]);
-  
 
    useEffect(() => {
-    if (!containerRef.current) return;
+  const updateSize = () => {
+    const { width, height } = getCanvasDimensions(window.innerWidth);
+    setCanvasSize({ width, height });
+  };
 
-    const updateSize = () => {
-      const rect = containerRef.current!.getBoundingClientRect();
-      // Mantém proporção 3:2 (ex: 16:10 → 1.6), mas limita a 800px de largura
-      const maxW = Math.min(rect.width - 32, 800); // -32 para padding/margin
-      const ratio = 3 / 2;
-      const width = maxW;
-      const height = width / ratio;
-
-      setCanvasSize({ width, height });
-    };
-
-    updateSize();
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
-  }, []);
+  // Chama uma vez agora
+  updateSize();
+  
+  // E escuta resize
+  window.addEventListener("resize", updateSize);
+  return () => window.removeEventListener("resize", updateSize);
+}, []);
 
   const updateStore = (bg: SceneObjectType | null, els: SceneElement[]) => {
     updateFormData({ sceneData: { background: bg, elements: els } });
@@ -59,6 +57,13 @@ export const useSceneCanvas = () => {
       updateStore(type, elements);
       return;
     }
+
+     // Defina margem segura baseada no tamanho do elemento
+  const padding = 30;
+
+  // Garanta que o clique não fique muito perto da borda
+  let safeX = Math.max(padding, Math.min(clickX, canvasSize.width - padding));
+  let safeY = Math.max(padding, Math.min(clickY, canvasSize.height - padding));
 
    const width = type.includes("damage")
     ? 30
@@ -84,10 +89,8 @@ export const useSceneCanvas = () => {
             ? 40
             : 40;
 
-            const centerX = clickX;
-const centerY = clickY;
-const x = centerX;
-const y = centerY;
+ const x = safeX; // ← já é o centro (por causa do offsetX no Group)
+  const y = safeY;
 
    const newElement: SceneElement = {
     id: `el-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -113,8 +116,8 @@ const y = centerY;
   // ✅ Mantenha o `addObject` antigo apenas para compatibilidade (ex: menu)
   const addObject = (type: SceneObjectType) => {
     // Fallback: adiciona no centro do canvas se não tiver coordenadas
-    const centerX = canvasSize.width / 2 - 20;
-    const centerY = canvasSize.height / 2 - 20;
+    const centerX = canvasSize.width / 2 ;
+    const centerY = canvasSize.height / 2 ;
     addObjectAtPosition(type, centerX, centerY);
   };
 
