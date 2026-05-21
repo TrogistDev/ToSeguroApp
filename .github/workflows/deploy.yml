@@ -16,34 +16,24 @@ jobs:
       - name: Deploy to AWS EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.AWS_HOST }}            # <-- Bate com o seu segredo do GitHub
-          username: ubuntu                         # <-- String rígida direta (evita precisar de outro segredo)
-          key: ${{ secrets.AWS_PRIVATE_KEY }}      # <-- Ajustado para ler o seu segredo real
+          host: ${{ secrets.AWS_HOST }}
+          username: ubuntu
+          key: ${{ secrets.AWS_PRIVATE_KEY }}
           script_stop: true
           script: |
-            # 1. Garantir que o Docker Compose está instalado na máquina virtual
-            if ! command -v docker-compose &> /dev/null; then
-              sudo curl -L "https://github.com/docker/compose/releases/download/v2.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-              sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose || true
-            fi
-
-            # 2. Parar os containers antes de apagar a pasta (Evita travar volumes e descritores de rede)
-            if [ -d "ToSeguroApp/apps" ]; then
+            # 1. Se a pasta não existir, faz o clone inicial; se existir, atualiza de forma limpa
+            if [ ! -d "ToSeguroApp" ]; then
+              git clone https://github.com/TrogistDev/ToSeguroApp.git ToSeguroApp
               cd ToSeguroApp/apps
-              docker-compose down || true
-              cd ../..
+            else
+              cd ToSeguroApp
+              git reset --hard
+              git pull origin main
+              cd apps
             fi
 
-            # 3. Limpeza ultra-agressiva para matar o bug de refs do Git
-            sudo rm -rf ToSeguroApp
-            sync
+            # 2. Injeta o .env de produção atualizado
+            echo "${{ secrets.PROD_ENV_FILE }}" > .env
 
-            # 4. Clonar o repositório utilizando uma abordagem limpa
-            git clone https://github.com/TrogistDev/ToSeguroApp.git ToSeguroApp
-
-            # 5. Entrar na pasta correta da arquitetura
-            cd ToSeguroApp/apps
-
-            # 6. Orquestrar os containers com o binário garantido
-            docker-compose up --build -d
+            # 3. Build e Atualização Automática sem quebrar o site (Zero Downtime)
+            docker-compose up --build -d --remove-orphans
