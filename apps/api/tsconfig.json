@@ -1,16 +1,21 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": false,
+    "rewriteRelativeImportExtensions": false,
+    
+    /* Esta flag resolve o problema dos imports sem .js no NodeNext */
+    "noEmit": false,
+    
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "noEmitOnError": false,
-    "noImplicitAny": false  // Desativa a validação estrita de tipos implícitos como any
+    "noEmitOnError": true
   },
   "include": ["src/**/*"]
 }
