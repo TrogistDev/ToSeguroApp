@@ -38,11 +38,14 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Permite requests sem origem (como ferramentas de API ou curl)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Verifica se a origem está na lista ou se é o nosso servidor AWS
+    if (allowedOrigins.includes(origin) || origin.includes("ec2-13-60-56-153.eu-north-1.compute.amazonaws.com")) {
       callback(null, true);
     } else {
+      console.log("❌ Bloqueado por CORS: Origem recebida:", origin);
       callback(new Error("Bloqueado por política estrita de CORS do ToSeguro"));
     }
   },
