@@ -33,34 +33,39 @@ app.use(
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3001",
-  "http://localhost:3000",
+
   "http://13.60.56.153:3001",
-  "http://13.60.56.153:3000"
+  "http://13.60.56.153:3000",
+
+  "http://ec2-13-60-56-153.eu-north-1.compute.amazonaws.com:3001",
+  "http://ec2-13-60-56-153.eu-north-1.compute.amazonaws.com:3000",
 ];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Permite requests sem origem (como ferramentas de API, Uptime monitors ou curl)
-    if (!origin) return callback(null, true);
-    
-    // Verifica se a origem está explicitamente mapeada
-    const isAllowed = allowedOrigins.includes(origin);
-    
-    // Verifica se a requisição vem do ecossistema AWS do ToSeguro (independente da porta ou subdomínio)
-    const isAWSEcosystem = origin.includes("13.60.56.153") || 
-                           origin.includes("compute.amazonaws.com");
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
 
-    if (isAllowed || isAWSEcosystem) {
-      return callback(null, true);
-    } else {
-      console.log("❌ Bloqueado por CORS Rígido. Origem não autorizada:", origin);
-      return callback(new Error("Bloqueado por política estrita de CORS do ToSeguro"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-tenant-id"]
-}));
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("❌ CORS BLOCKED:", origin);
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-tenant-id",
+    ],
+  }),
+);
+
+app.options("*", cors());
 
 app.use(express.json());
 

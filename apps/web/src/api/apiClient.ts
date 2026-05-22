@@ -4,15 +4,20 @@ import { useAuthStore } from '../store/authStore';
 // ✅ Defesa Rígida: Validação e Fallback nativo do Vite (sem depender de process.env)
 const getBaseURL = (): string => {
   const viteApiUrl = import.meta.env.VITE_API_URL;
-  
+
+  // PRODUÇÃO
   if (import.meta.env.PROD) {
-    // Se estiver em produção, VITE_API_URL é estritamente obrigatório
-    return viteApiUrl || `http://${window.location.hostname}:3000/api`;
+    if (!viteApiUrl) {
+      throw new Error("VITE_API_URL não definida");
+    }
+
+    return viteApiUrl;
   }
-  
-  // Ambiente de desenvolvimento local
+
+  // DEV
   return viteApiUrl || "http://localhost:3000/api";
 };
+
 
 const apiClient = axios.create({
   baseURL: getBaseURL(),
