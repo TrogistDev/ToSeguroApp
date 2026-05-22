@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 
 // Injeta dinamicamente a URL da VPS em produção ou mantém localhost em desenvolvimento
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api', 
+  baseURL: import.meta.env.VITE_API_URL || 'http://ec2-13-60-56-153.eu-north-1.compute.amazonaws.com:3000/api', 
 });
 
 apiClient.interceptors.request.use((config) => {
