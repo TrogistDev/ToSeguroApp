@@ -24,7 +24,8 @@ export class AccidentController {
 
   async getAll(req: Request, res: Response) {
     try {
-      const accidents = await accidentRepo.findAllByTenant();
+      // FIX: Usar 'this.accidentRepo' em vez da variável global solta
+      const accidents = await this.accidentRepo.findAllByTenant();
       return res.json(accidents);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
@@ -48,38 +49,55 @@ export class AccidentController {
   }
 
   async store(req: Request, res: Response) {
-    try {
-      const userId = (req as any).user.id;
-      const { fullName, lastName, accidentType, sceneData, location, photos } =
-        req.body;
-
-      if (
-        !fullName ||
-        !lastName ||
-        !accidentType ||
-        !location?.address ||
-        !sceneData
-      ) {
-        return res
-          .status(400)
-          .json({ error: "Parâmetros obrigatórios ausentes." });
-      }
-
-      const newAccident = await accidentRepo.create(
-        { fullName, lastName, accidentType, sceneData, location },
-        userId,
-      );
-
-      if (photos && Array.isArray(photos)) {
-        for (const url of photos) {
-          await accidentRepo.addPhoto(newAccident.id, url);
-        }
-      }
-      return res.status(201).json(newAccident);
-    } catch (error: any) {
-      return res.status(500).json({ error: "Erro ao salvar sinistro." });
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: "Utilizador não autenticado no contexto da requisição." });
     }
+
+    const { fullName, lastName, accidentType, sceneData, location, photos } = req.body;
+
+    // Log de auditoria para depuração rápida no terminal do Docker/Local
+    console.log("📥 PAYLOAD RECEBIDO NO BACKEND:", JSON.stringify({ fullName, lastName, accidentType, location }, null, 2));
+
+    // Cláusula de barreira defensiva
+    if (!fullName || !lastName || !accidentType || !location?.address || !sceneData) {
+      return res.status(400).json({ 
+        error: "Parâmetros obrigatórios ausentes.",
+        missingFields: {
+          fullName: !fullName,
+          lastName: !lastName,
+          accidentType: !accidentType,
+          address: !location?.address,
+          sceneData: !sceneData
+        }
+      });
+    }
+
+    // Criação isolada via repositório
+    const newAccident = await this.accidentRepo.create(
+      { fullName, lastName, accidentType, sceneData, location },
+      userId
+    );
+
+    // Associação de fotos persistidas
+    if (photos && Array.isArray(photos)) {
+      for (const url of photos) {
+        if (url) await this.accidentRepo.addPhoto(newAccident.id, url);
+      }
+    }
+
+    return res.status(201).json(newAccident);
+  } catch (error: any) {
+    // RÍGIDO: Expõe o erro real no log para saberes exatamente o campo que falhou no banco
+    console.error("🔥 ERRO CRÍTICO NO MÉTODO STORE:", error);
+    return res.status(500).json({ 
+      error: "Erro interno ao salvar o sinistro.", 
+      message: error.message,
+      stack: process.env.NODE_ENV !== "production" ? error.stack : undefined
+    });
   }
+}
 
   public getPresignedUrl = async (req: any, res: any) => {
     try {

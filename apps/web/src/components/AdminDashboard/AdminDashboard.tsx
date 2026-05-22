@@ -9,6 +9,7 @@ import { useAdminDashboard } from "./hooks/useAdminDashboard";
 export const AdminDashboard: React.FC = () => {
   const {
     accidents,
+    exportAccident,
     isModalOpen,
     setIsModalOpen,
     email,
@@ -36,8 +37,8 @@ export const AdminDashboard: React.FC = () => {
 
       <AccidentTableUI
         accidents={accidents}
+        onExport={exportAccident}
         t={t}
-        onExport={/* ... */ () => {}}
       />
 
       {isModalOpen && (

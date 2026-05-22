@@ -156,31 +156,53 @@ export const useAccidentReport = () => {
   }
 };
   const handleFinishReport = async () => {
+    console.log("=== 🚀 INICIANDO FLUXO DE SUBMISSÃO ===");
+    console.log("DEBUG ESTADO ATUAL:", { token: !!token, tenantSlug, formData });
+
     if (!token || !tenantSlug) {
-      alert("Sessão inválida.");
+      console.warn("❌ ABORTO: Sessão ou Tenant ausentes no Zustand.");
+      alert("Sessão inválida. Faça login novamente.");
       return;
     }
 
     try {
+      // Montagem do payload purificado
       const payload = {
-        fullName: formData.fullName,
-        lastName: formData.lastName,
+        fullName: String(formData.fullName || "").trim(),
+        lastName: String(formData.lastName || "").trim(),
         accidentType: formData.accidentType,
         sceneData: {
-          background: formData.sceneData?.background || null,
+          background: formData.sceneData?.background || { width: 800, height: 600 },
           elements: formData.sceneData?.elements || [],
         },
         location: {
-          lat: formData.lat || 0,
-          lng: formData.lng || 0,
-          address: formData.address || addressInput,
+          lat: Number(formData.lat || coords?.lat || 0),
+          lng: Number(formData.lng || coords?.lng || 0),
+          address: String(formData.address || addressInput || "").trim(),
         },
-        photos: uploadedPhotos, // Contém a lista limpa de strings http://localhost:3000... ou s3://...
+        photos: uploadedPhotos,
       };
 
-      await apiClient.post("/accidents", payload);
-      alert("Sinistro relatado com sucesso!");
+      console.log("📦 PAYLOAD MONTADO PARA ENVIO:", payload);
+
+      // Validação local minuciosa com logs explícitos
+      if (!payload.fullName || !payload.lastName || !payload.accidentType || !payload.location.address) {
+        console.warn("❌ ABORTO: Validação local falhou. Campos em falta:", {
+          fullName: !payload.fullName,
+          lastName: !payload.lastName,
+          accidentType: !payload.accidentType,
+          address: !payload.location.address,
+        });
+        alert("Por favor, preencha todos os campos obrigatórios antes de finalizar.");
+        return;
+      }
+
+      console.log("✈️ DISPARANDO REQUISIÇÃO POST PARA /accidents...");
+      const response = await apiClient.post("/accidents", payload);
       
+      console.log("✅ RESPOSTA DA API RECEBIDA:", response.data);
+      alert("Sinistro relatado com sucesso!");
+        
       // Reset estrito dos estados locais e do store global
       setUploadedPhotos([]);
       setSignedPhotoUrls({});
@@ -193,18 +215,20 @@ export const useAccidentReport = () => {
         address: "",
         lat: 0,
         lng: 0,
-        sceneData: {
-          background: null,
-          elements: [],
-        },
+        sceneData: { background: null, elements: [] },
         photos: [],
       });
 
       setStep(1);
     } catch (error: any) {
+      console.error("🔥 ERRO CAPTURADO NO CATCH DO FRONTEND:", error);
+      if (error.response) {
+        console.error("Dados da resposta do erro:", error.response.data);
+      }
       alert(error.response?.data?.error || "Erro interno ao conectar com a API.");
     }
   };
+
 
   return {
     formData,

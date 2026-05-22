@@ -13,16 +13,20 @@ interface Accident {
 export const useAccidents = (token: string, tenantSlug: string) => {
   const [accidents, setAccidents] = useState<Accident[]>([]);
 
-  // ✅ useCallback para permitir que o refetch seja chamado sem re-renderizar o hook desnecessariamente
   const fetchAccidents = useCallback(async () => {
+    if (!token || !tenantSlug) return;
     try {
-      // O apiClient já possui a baseURL correta (via VITE_API_URL)
-      const res = await apiClient.get("/accidents");
+      const res = await apiClient.get("/accidents", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-tenant-id": tenantSlug, // ✅ Alinhamento Rígido
+        }
+      });
       setAccidents(res.data);
     } catch (err) {
       console.error("Erro ao carregar dados do dashboard", err);
     }
-  }, []);
+  }, [token, tenantSlug]);
 
   useEffect(() => {
     fetchAccidents();
