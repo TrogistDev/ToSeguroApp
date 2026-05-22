@@ -1,6 +1,27 @@
 version: '3.8'
 
 services:
+  # ========================================================
+  # PROXY REVERSO & SSL AUTOMÁTICO (Mata o erro de GPS)
+  # ========================================================
+  nginx-proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: accident_proxy
+    restart: always
+    ports:
+      - "80:80"   # HTTP público (Todos acessam)
+      - "443:443" # HTTPS público (Garante o GPS em todos os PCs)
+      - "81:81"   # Painel de Administração (Apenas para tu configurares)
+    volumes:
+      - ./nginx/data:/data
+      - ./nginx/letsencrypt:/etc/letsencrypt
+    depends_on:
+      - app
+      - api
+
+  # ========================================================
+  # FRONTEND (React / Vite)
+  # ========================================================
   app:
     build:
       context: ./web       # Sobe um nível para achar a pasta web (fora de apps)
@@ -17,8 +38,10 @@ services:
     depends_on:
       - api
       - postgres
-      - redis
 
+  # ========================================================
+  # BACKEND (Node.js API)
+  # ========================================================
   api:
     build:
       context: ./api        # Se a API está dentro de apps/api, o caminho relativo ao compose é apenas ./api
@@ -43,12 +66,14 @@ services:
     depends_on:
       - postgres
 
+  # ========================================================
+  # DATABASE (PostgreSQL)
+  # ========================================================
   postgres:
     image: postgres:16-alpine
     container_name: accident_db
     restart: always
     environment:
-      # ✅ ARQUITETURA ALINHADA: O banco agora usa exatamente as mesmas variáveis do .env gerado no pipeline
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
@@ -56,13 +81,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:alpine
-    container_name: accident_cache
-    restart: always
-    ports:
-      - "6379:6379"
 
 volumes:
   postgres_data:

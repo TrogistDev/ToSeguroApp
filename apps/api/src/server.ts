@@ -5,12 +5,8 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { authMiddleware } from "./interface-adapters/middlewares/authMiddleware";
-import { tenantMiddleware } from "./interface-adapters/middlewares/tenantMiddleware";
-import { AccidentController } from "./interface-adapters/controllers/AccidentController";
-import { AccidentRepository } from "./infrastructure/repositories/AccidentRepository";
-import { ExportAccidentUseCase } from "./core/use-cases/ExportAccidentUseCase.js";
-import { AuthController } from "./interface-adapters/controllers/AuthControllers";
+import { createAuthRouter } from "./interface-adapters/routes/auth.router";
+import { createProtectedApiRouter } from "./interface-adapters/routes/protected-api.router";
 
 console.log("🔍 Verificando Variáveis AWS:", {
   region: process.env.AWS_REGION,
@@ -57,58 +53,22 @@ app.use(
 
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "x-tenant-id",
-    ],
+    allowedHeaders: ["Content-Type", "Authorization", "x-tenant-id"],
   }),
 );
-
-
 
 app.use(express.json());
 
 // --- Endpoint de Infraestrutura NATIVO ---
 app.get("/health", (req, res) => {
-  return res.status(200).json({ 
-    status: "healthy", 
-    timestamp: new Date().toISOString() 
+  return res.status(200).json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
   });
 });
 
-const authController = new AuthController();
-
-// --- 🔓 Rotas de Autenticação Públicas (Grupo Isolado) ---
-const publicAuthRoutes = express.Router();
-
-// ✅ CORREÇÃO: Removemos totalmente os setHeaders manuais de COOP que causavam o erro 401 invalid_client
-publicAuthRoutes.post("/login", (req, res) => authController.login(req, res));
-publicAuthRoutes.post("/google", (req, res) => authController.googleLogin(req, res));
-
-// Aplica o prefixo /api/auth nas rotas públicas de login
-app.use("/api/auth", publicAuthRoutes);
-
-
-// --- 🔒 Rotas de Negócio e Gestão (100% Blindadas com Auth e Tenant) ---
-const protectedRoutes = express.Router();
-protectedRoutes.use(authMiddleware);
-protectedRoutes.use(tenantMiddleware);
-
-protectedRoutes.post("/auth/admin-create", (req, res) => authController.createByAdmin(req, res));
-
-// Endpoints de Sinistros
-const accidentRepo = new AccidentRepository();
-const exportAccidentUseCase = new ExportAccidentUseCase(accidentRepo);
-const accidentController = new AccidentController(accidentRepo, exportAccidentUseCase);
-
-protectedRoutes.post("/accidents", accidentController.store);
-protectedRoutes.get("/accidents", accidentController.getAll);
-protectedRoutes.get("/accidents/presigned-url", accidentController.getPresignedUrl);
-protectedRoutes.get("/accidents/photo-url", accidentController.getPhotoUrl.bind(accidentController));
-protectedRoutes.get("/accidents/:id/export", accidentController.getExport.bind(accidentController));
-
-app.use("/api", protectedRoutes);
+app.use("/api/auth", createAuthRouter());
+app.use("/api", createProtectedApiRouter());
 
 const PORT = process.env.PORT || 3000;
 try {
