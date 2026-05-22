@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import apiClient from "../services/apiClient";
+import apiClient from "../../../api/apiClient";
 
 interface Accident {
   id: string;
