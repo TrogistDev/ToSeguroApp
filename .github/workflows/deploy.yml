@@ -41,6 +41,8 @@ jobs:
             echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> .env
             echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+
             
             # ✅ INJEÇÃO CRÍTICA: Garante que o docker-compose tenha onde ler as variáveis em tempo de build
             echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
