@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
   <diagram name="Página-1" id="h_r4vWJ5OVmmj1Q7-gqN">
-    <mxGraphModel dx="2350" dy="1402" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3000" pageHeight="3000" math="0" shadow="0">
+    <mxGraphModel dx="4074" dy="2403" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3000" pageHeight="3000" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -108,65 +108,6 @@
         </mxCell>
         <mxCell id="cJREyyNcY_Gb7DRHsUiv-26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="User Information&lt;div&gt;Accident Location&lt;/div&gt;&lt;div&gt;Accident Time&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="1580" y="1869.8600000000001" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-2" edge="1" parent="1" source="ONTYNpy0MoEVtusRWa8t-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="cJREyyNcY_Gb7DRHsUiv-15">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="1200" y="1770" />
-              <mxPoint x="1200" y="1630" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-11" edge="1" parent="1" source="ONTYNpy0MoEVtusRWa8t-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.431;entryY=1.031;entryDx=0;entryDy=0;entryPerimeter=0;" target="ONTYNpy0MoEVtusRWa8t-12">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="830" y="1670" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="CREATE USER" vertex="1">
-          <mxGeometry height="60" width="120" x="1010" y="1740" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-4" edge="1" parent="1" source="ONTYNpy0MoEVtusRWa8t-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ONTYNpy0MoEVtusRWa8t-5">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="1290" y="1830" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="EXPORT JSON" vertex="1">
-          <mxGeometry height="60" width="120" x="1140" y="1910.0000000000002" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-6" edge="1" parent="1" source="ONTYNpy0MoEVtusRWa8t-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="cJREyyNcY_Gb7DRHsUiv-15">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Accident Info" vertex="1">
-          <mxGeometry height="60" width="120" x="1230" y="1740" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-9" edge="1" parent="1" source="ONTYNpy0MoEVtusRWa8t-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="cJREyyNcY_Gb7DRHsUiv-22">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Upload Photos" vertex="1">
-          <mxGeometry height="60" width="120" x="1850" y="1900" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-10" edge="1" parent="1" source="ONTYNpy0MoEVtusRWa8t-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="cJREyyNcY_Gb7DRHsUiv-21">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="Create&lt;div&gt;Accident Visual Representation&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="2090" y="1950" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-14" edge="1" parent="1" source="ONTYNpy0MoEVtusRWa8t-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="cJREyyNcY_Gb7DRHsUiv-6">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="470" y="1610" />
-              <mxPoint x="470" y="1010" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="SAVE INFO" vertex="1">
-          <mxGeometry height="60" width="120" x="480" y="1580" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-16" edge="1" parent="1" source="ONTYNpy0MoEVtusRWa8t-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ONTYNpy0MoEVtusRWa8t-1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="ONTYNpy0MoEVtusRWa8t-13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="SEND PASSWORD TO USER EMAIL" vertex="1">
-          <mxGeometry height="60" width="120" x="920" y="1530.0000000000002" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
