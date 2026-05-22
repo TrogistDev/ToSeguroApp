@@ -59,11 +59,6 @@ jobs:
             # 👇 Define a URL da API para o teu frontend apontar na VPS
             echo "VITE_API_URL=http://${{ secrets.AWS_HOST }}:3000" >> .env
 
-            # 5. O segredo está aqui: exportar as variáveis ANTES do comando build
-            # O docker-compose só vê o que estiver exportado no shell do servidor
-            export VITE_GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
-            export VITE_API_URL="http://ec2-13-60-56-153.eu-north-1.compute.amazonaws.com:3000"
-
-            # Agora sim, faz o build forçando a leitura dessas variáveis
+            # 5. Build forçado injetando variáveis diretamente no build do compose
             docker-compose --env-file .env build --no-cache app
             docker-compose up -d --remove-orphans
