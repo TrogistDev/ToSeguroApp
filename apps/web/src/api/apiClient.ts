@@ -1,11 +1,25 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
+// ✅ Defesa Rígida: Validação e Fallback nativo do Vite (sem depender de process.env)
+const getBaseURL = (): string => {
+  const viteApiUrl = import.meta.env.VITE_API_URL;
+  
+  if (import.meta.env.PROD) {
+    // Se estiver em produção, VITE_API_URL é estritamente obrigatório
+    return viteApiUrl || `http://${window.location.hostname}:3000/api`;
+  }
+  
+  // Ambiente de desenvolvimento local
+  return viteApiUrl || "http://localhost:3000/api";
+};
+
 const apiClient = axios.create({
-  // Garante que o fallback para localhost funciona se VITE_API_URL falhar
-  baseURL:  process.env.NODE_ENV === "production" ? import.meta.env.VITE_API_URL : "http://localhost:3000/api",
+  baseURL: getBaseURL(),
+  timeout: 10000, // Boa prática de resiliência: evita requisições 'pending' infinitas
 });
 
+// Interceptor de Requisição
 apiClient.interceptors.request.use((config) => {
   const { token, tenantSlug } = useAuthStore.getState();
   
@@ -13,12 +27,14 @@ apiClient.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
-  // Padronize aqui: O servidor espera 'x-tenant-id'
+  // Padronização de segurança para arquitetura Multi-tenant
   if (tenantSlug) {
     config.headers['x-tenant-id'] = tenantSlug; 
   }
 
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 export default apiClient;
