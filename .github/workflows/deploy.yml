@@ -26,29 +26,31 @@ jobs:
             git pull origin main
             cd apps
 
-            # 1. Captura limpa dos segredos para variáveis locais para evitar quebras no parse do YAML
-            RAW_DB_USER="${{ secrets.DB_USER }}"
-            RAW_DB_PASS="${{ secrets.DB_PASSWORD }}"
-            RAW_DB_NAME="${{ secrets.DB_NAME }}"
-            RAW_GOOGLE_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
-            RAW_AWS_HOST="${{ secrets.AWS_HOST }}"
+            # 1. Isolamento em variáveis limpas sem pipes perigosos
+            CLEAN_NODE_ENV=$(echo "${{ secrets.NODE_ENV }}" | tr -d '\r\n')
+            CLEAN_PORT=$(echo "${{ secrets.PORT }}" | tr -d '\r\n')
+            CLEAN_JWT=$(echo "${{ secrets.JWT_SECRET }}" | tr -d '\r\n')
+            
+            DB_USER=$(echo "${{ secrets.DB_USER }}" | tr -d '\r\n')
+            DB_PASSWORD=$(echo "${{ secrets.DB_PASSWORD }}" | tr -d '\r\n')
+            DB_NAME=$(echo "${{ secrets.DB_NAME }}" | tr -d '\r\n')
+            
+            CLEAN_GOOGLE_ID=$(echo "${{ secrets.GOOGLE_CLIENT_ID }}" | tr -d '\r\n')
+            CLEAN_AWS_HOST=$(echo "${{ secrets.AWS_HOST }}" | tr -d '\r\n')
 
-            # 2. Higienização estrita de Carriage Return e Newline por Bash nativo
-            DB_USER=$(echo "$RAW_DB_USER" | tr -d '\r\n')
-            DB_PASSWORD=$(echo "$RAW_DB_PASS" | tr -d '\r\n')
-            DB_NAME=$(echo "$RAW_DB_NAME" | tr -d '\r\n')
-            CLEAN_GOOGLE_ID=$(echo "$RAW_GOOGLE_ID" | tr -d '\r\n')
-            CLEAN_AWS_HOST=$(echo "$RAW_AWS_HOST" | tr -d '\r\n')
+            # 2. Fallbacks seguros com IFs nativos do Bash (Não alteram o status de saída)
+            if [ -z "$CLEAN_NODE_ENV" ]; then CLEAN_NODE_ENV="production"; fi
+            if [ -z "$CLEAN_PORT" ]; then CLEAN_PORT="3000"; fi
+            if [ -z "$CLEAN_JWT" ]; then CLEAN_JWT="super_secret_jwt_key_default"; fi
+            if [ -z "$DB_USER" ]; then DB_USER="postgres"; fi
+            if [ -z "$DB_PASSWORD" ]; then DB_PASSWORD="password_secure"; fi
+            if [ -z "$DB_NAME" ]; then DB_NAME="toseguro_db"; fi
 
-            # 3. Aplicação de Fallbacks Rígidos para Produção
-            [ -z "$DB_USER" ] && DB_USER="postgres"
-            [ -z "$DB_PASSWORD" ] && DB_PASSWORD="password_secure"
-            [ -z "$DB_NAME" ] && DB_NAME="toseguro_db"
-
-            # 4. Escrita limpa do .env em runtime (Usa aspas duplas para o bloco não quebrar)
-            echo "NODE_ENV=$(echo "${{ secrets.NODE_ENV }}" | tr -d '\r\n')" > .env
-            echo "PORT=$(echo "${{ secrets.PORT }}" | tr -d '\r\n' | grep . || echo "3000")" >> .env
-            echo "JWT_SECRET=$(echo "${{ secrets.JWT_SECRET }}" | tr -d '\r\n')" >> .env
+            # 3. Escrita linear do arquivo .env
+            echo "NODE_ENV=$CLEAN_NODE_ENV" > .env
+            echo "PORT=$CLEAN_PORT" >> .env
+            echo "JWT_SECRET=$CLEAN_JWT" >> .env
+            
             echo "AWS_ACCESS_KEY_ID=$(echo "${{ secrets.AWS_ACCESS_KEY_ID }}" | tr -d '\r\n')" >> .env
             echo "AWS_SECRET_ACCESS_KEY=$(echo "${{ secrets.AWS_SECRET_ACCESS_KEY }}" | tr -d '\r\n')" >> .env
             echo "AWS_REGION=$(echo "${{ secrets.AWS_REGION }}" | tr -d '\r\n')" >> .env
@@ -69,16 +71,15 @@ jobs:
             echo "VITE_GOOGLE_CLIENT_ID=$CLEAN_GOOGLE_ID" >> .env
             echo "VITE_API_URL=http://$CLEAN_AWS_HOST:3000/api" >> .env
 
-            # 5. Export de variáveis para o contexto do Docker Build
+            # 4. Export para o contexto do Docker Compose
             export VITE_GOOGLE_CLIENT_ID="$CLEAN_GOOGLE_ID"
             export VITE_API_URL="http://$CLEAN_AWS_HOST:3000/api"
 
-            # 6. Compilação do Frontend
+            # 5. Build e Inicialização da Infraestrutura
             docker-compose build --no-cache \
               --build-arg VITE_GOOGLE_CLIENT_ID="$VITE_GOOGLE_CLIENT_ID" \
               --build-arg VITE_API_URL="$VITE_API_URL" \
               app
 
-            # 7. Reinicialização controlada dos containers e remoção de órfãos
             docker-compose down -v
             docker-compose up -d --remove-orphans
