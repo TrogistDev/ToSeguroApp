@@ -3,6 +3,8 @@ import { useAccidentReport } from "./hooks/useAccidentReport";
 import { StepPersonalData } from "./steps/StepPersonalData";
 import { StepPhotos } from "./steps/StepPhotos";
 import { StepFinalize } from "./steps/StepFinalize";
+import { useTranslation } from "react-i18next";
+
 
 export const AccidentReportForm: React.FC = () => {
   const {
@@ -20,11 +22,14 @@ export const AccidentReportForm: React.FC = () => {
     handlePhotoUpload,
     handleFinishReport,
   } = useAccidentReport();
-
+  
+  ;
+  
+  const { t } = useTranslation()
   return (
     <div className="max-w-2xl mx-auto  bg-white rounded-xl shadow-sm border border-gray-100 w-full">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Relatar Sinistro</h2>
+        <h2 className="text-xl font-bold text-gray-800">{t("forms.AccidentReport.title")}</h2>
         <span className="text-xs font-semibold bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
           Passo {step} de 3
         </span>

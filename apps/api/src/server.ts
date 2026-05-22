@@ -21,7 +21,7 @@ console.log("🔍 Verificando Variáveis AWS:", {
 
 const app = express();
 
-// Middlewares de Segurança Globais - Ajustado para permitir pop-ups cruzados (Google OAuth)
+// Middlewares de Segurança Globais - COOP relaxado globalmente para suportar popups seguros
 app.use(
   helmet({
     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
@@ -32,6 +32,7 @@ app.use(
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3001",
+  "http://localhost:3000",
   "http://13.60.56.153:3001",
   "http://ec2-13-60-56-153.eu-north-1.compute.amazonaws.com:3001"
 ];
@@ -41,7 +42,7 @@ app.use(cors({
     // Permite requests sem origem (como ferramentas de API ou curl)
     if (!origin) return callback(null, true);
     
-    // Verifica se a origem está na lista ou se é o nosso servidor AWS
+    // Validação rígida das origens permitidas em ambiente de produção
     if (allowedOrigins.includes(origin) || origin.includes("ec2-13-60-56-153.eu-north-1.compute.amazonaws.com")) {
       callback(null, true);
     } else {
@@ -64,8 +65,16 @@ app.get("/health", (req, res) => {
 
 const authController = new AuthController();
 
-// --- 🔓 Rotas de Autenticação Públicas (Grupo Isolado) ---
+// --- 🔓 Rotas de Autenticação Públicas (Grupo Isolado com Correção de Middleware de Cabeçalho) ---
 const publicAuthRoutes = express.Router();
+
+// ✅ CORREÇÃO CRÍTICA: Middleware para injetar os cabeçalhos que autorizam o handshake da Google
+publicAuthRoutes.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+  next();
+});
+
 publicAuthRoutes.post("/login", (req, res) => authController.login(req, res));
 publicAuthRoutes.post("/google", (req, res) => authController.googleLogin(req, res));
 

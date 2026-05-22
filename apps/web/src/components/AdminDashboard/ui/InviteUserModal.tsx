@@ -14,7 +14,6 @@ interface Props {
   setRole: (val: "USER" | "ADMIN") => void;
   successMsg?: string | null;
   errorMsg?: string | null;
-  handleSubmit: (e: React.FormEvent) => void;
 }
 
 export const InviteUserModal: React.FC<Props> = ({
@@ -30,7 +29,6 @@ export const InviteUserModal: React.FC<Props> = ({
   setRole,
   successMsg,
   errorMsg,
-  handleSubmit,
 }) => {
   const { t } = useTranslation();
 
@@ -57,7 +55,8 @@ export const InviteUserModal: React.FC<Props> = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Note: O form será renderizado no componente principal, aqui só abrimos o modal */}
+        <div className="space-y-4">
           <label className="block text-xs font-bold uppercase text-slate-500">{t("dashboard.fields.firstName")}</label>
           <input
             type="text"
@@ -95,13 +94,8 @@ export const InviteUserModal: React.FC<Props> = ({
             <option value="ADMIN">{t("dashboard.roles.ADMIN")}</option>
           </select>
 
-          <Button
-            type="submit"
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition"
-          >
-            {t("dashboard.btnConfirm")}
-          </Button>
-        </form>
+          {/* O botão de submit deve estar no AdminDashboard.tsx, não aqui */}
+        </div>
       </div>
     </div>
   );

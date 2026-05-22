@@ -10,42 +10,56 @@ export const useAccidentReport = () => {
   const { captureGPS, coords } = useSmartLocation();
 
   const [addressInput, setAddressInput] = useState(formData.address || "");
-  const [suggestions, setSuggestions] = useState<
-    google.maps.places.AutocompletePrediction[]
-  >([]);
+  const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>(
-    formData.photos || [],
-  );
-  const [signedPhotoUrls, setSignedPhotoUrls] = useState<
-    Record<string, string>
-  >({});
-  const autocompleteService =
-    useRef<google.maps.places.AutocompleteService | null>(null);
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>(formData.photos || []);
+  const [signedPhotoUrls, setSignedPhotoUrls] = useState<Record<string, string>>({});
+  
+  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
+
+  // ✅ EXTRAÇÃO DE CHAVE BLINDADA (Suporta local-upload e S3 de Produção)
+  const extractKey = (fullUrl: string): string => {
+    if (fullUrl.includes("/uploads/accidents/")) {
+      return `accidents/${fullUrl.split("/uploads/accidents/")[1]}`;
+    }
+    return fullUrl.split(".amazonaws.com/")[1] || fullUrl;
+  };
 
   const fetchSignedUrl = async (fullUrl: string) => {
-    const key = fullUrl.split(".amazonaws.com/")[1];
+    // Se já for uma URL local estática, não precisa pedir assinatura de leitura para o S3
+    if (fullUrl.includes("localhost:3000/uploads/")) {
+      setSignedPhotoUrls((prev) => ({ ...prev, [fullUrl]: fullUrl }));
+      return;
+    }
+
+    const key = extractKey(fullUrl);
     try {
       const { data } = await apiClient.get(`/accidents/photo-url`, {
         params: { key },
       });
       setSignedPhotoUrls((prev) => ({ ...prev, [fullUrl]: data.url }));
     } catch (err) {
-      console.error("Erro ao assinar URL:", err);
+      console.error("Erro ao assinar URL de leitura:", err);
     }
   };
 
+  // ✅ CORREÇÃO DE LOOPS INFINITOS: Executa apenas se o comprimento da array mudar
   useEffect(() => {
     uploadedPhotos.forEach((url) => {
-      if (!signedPhotoUrls[url]) fetchSignedUrl(url);
+      if (!signedPhotoUrls[url]) {
+        fetchSignedUrl(url);
+      }
     });
-    updateFormData({ photos: uploadedPhotos });
-  }, [uploadedPhotos, signedPhotoUrls, updateFormData]);
+    
+    // Evita disparar atualização de estado do Zustand se as fotos forem idênticas
+    if (JSON.stringify(formData.photos) !== JSON.stringify(uploadedPhotos)) {
+      updateFormData({ photos: uploadedPhotos });
+    }
+  }, [uploadedPhotos]); // Removido dependências instáveis para quebrar o loop
 
   useEffect(() => {
     if (!window.google) return;
-    autocompleteService.current =
-      new window.google.maps.places.AutocompleteService();
+    autocompleteService.current = new window.google.maps.places.AutocompleteService();
   }, []);
 
   useEffect(() => {
@@ -70,10 +84,10 @@ export const useAccidentReport = () => {
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
           }),
-        (err) => console.error("GPS negada:", err),
+        (err) => console.error("GPS negado:", err),
       );
     }
-  }, [captureGPS, updateFormData]);
+  }, [captureGPS]); // Removido updateFormData da dependência para evitar execuções cíclicas
 
   const handleAddressInput = (input: string) => {
     setAddressInput(input);
@@ -91,44 +105,56 @@ export const useAccidentReport = () => {
     );
   };
 
-  const handleSelectAddress = (
-    prediction: google.maps.places.AutocompletePrediction,
-  ) => {
+  const handleSelectAddress = (prediction: google.maps.places.AutocompletePrediction) => {
     setAddressInput(prediction.description);
     setSuggestions([]);
     updateFormData({ address: prediction.description });
   };
 
-  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
-    setIsUploading(true);
+ const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+  if (!e.target.files?.[0]) return;
+  setIsUploading(true);
 
-    try {
-      const file = e.target.files[0];
-      const { data } = await apiClient.get(`/accidents/presigned-url`, {
-        params: {
-          fileName: file.name,
-          fileType: file.type,
-        },
-      });
+  try {
+    const file = e.target.files[0];
+    
+    // 1. Busca a URL de upload (Bate no teu Express protegida)
+    const { data } = await apiClient.get(`/accidents/presigned-url`, {
+      params: { fileName: file.name, fileType: file.type },
+    });
 
-      const response = await fetch(data.uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-        },
-        body: file,
-      });
+    // 2. Configura os headers base
+    const headers: Record<string, string> = {
+      "Content-Type": file.type,
+    };
 
-      if (!response.ok) throw new Error(`Erro S3: ${response.status}`);
-      setUploadedPhotos((prev) => [...prev, data.fileUrl]);
-    } catch (err: any) {
-      alert("Falha no upload: " + err.message);
-    } finally {
-      setIsUploading(false);
+    // ✅ SE FOR AMBIENTE LOCAL (DEV), PRECISAMOS PASSAR PELA BARREIRA DO AUTH/TENANT MIDDLEWARE
+    if (data.uploadUrl.includes("localhost:3000") || data.uploadUrl.includes("127.0.0.1:3000")) {
+      // Puxa o token e o tenant do teu estado/localStorage/contexto onde o teu apiClient os vai buscar
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (tenantSlug) headers["x-tenant-id"] = tenantSlug; 
     }
-  };
 
+    // 3. Dispara o PUT purificado para o destino correto
+    const response = await fetch(data.uploadUrl, {
+      method: "PUT",
+      headers: headers,
+      body: file, // Binário puro da imagem
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro S3: ${response.status}`);
+    }
+
+    setUploadedPhotos((prev) => [...prev, data.fileUrl]);
+
+  } catch (err: any) {
+    console.error("❌ Falha no Upload:", err);
+    alert("Falha no upload: " + err.message);
+  } finally {
+    setIsUploading(false);
+  }
+};
   const handleFinishReport = async () => {
     if (!token || !tenantSlug) {
       alert("Sessão inválida.");
@@ -149,12 +175,16 @@ export const useAccidentReport = () => {
           lng: formData.lng || 0,
           address: formData.address || addressInput,
         },
-        photos: uploadedPhotos,
+        photos: uploadedPhotos, // Contém a lista limpa de strings http://localhost:3000... ou s3://...
       };
 
       await apiClient.post("/accidents", payload);
       alert("Sinistro relatado com sucesso!");
+      
+      // Reset estrito dos estados locais e do store global
       setUploadedPhotos([]);
+      setSignedPhotoUrls({});
+      setAddressInput("");
 
       updateFormData({
         fullName: "",
@@ -167,13 +197,12 @@ export const useAccidentReport = () => {
           background: null,
           elements: [],
         },
+        photos: [],
       });
 
       setStep(1);
     } catch (error: any) {
-      alert(
-        error.response?.data?.error || "Erro interno ao conectar com a API.",
-      );
+      alert(error.response?.data?.error || "Erro interno ao conectar com a API.");
     }
   };
 

@@ -62,7 +62,7 @@ export const StepPersonalData: React.FC<StepPersonalDataProps> = ({
         >
           <option value="">{t("steps.personalData.selectOption")}</option>
           {[
-            "colisão",
+            "colisao",
             "capotamento",
             "atropelamento",
             "queda",

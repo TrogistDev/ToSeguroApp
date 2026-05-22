@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { normalizeTranslationKey } from "../../../utils/translation";
 
 interface Accident {
   id: string;
@@ -12,10 +13,10 @@ interface Accident {
 interface Props {
   accidents: Accident[];
   t: (key: string) => string;
-  normalizeAccidentType: (type: string) => string;
+  onExport?: (id: string) => void; // ← opcional, se quiser passar handler
 }
 
-export const AccidentTable: React.FC<Props> = ({ accidents, t, normalizeAccidentType }) => (
+export const AccidentTableUI: React.FC<Props> = ({ accidents, t, onExport }) => (
   <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
     <div className="p-5 border-b border-slate-100 bg-slate-50/50">
       <h3 className="font-bold text-slate-800">{t("dashboard.tableTitle")}</h3>
@@ -32,7 +33,6 @@ export const AccidentTable: React.FC<Props> = ({ accidents, t, normalizeAccident
               <th className="p-4">{t("dashboard.columns.type")}</th>
               <th className="p-4">{t("dashboard.columns.address")}</th>
               <th className="p-4">{t("dashboard.columns.date")}</th>
-              <th className="p-4">Export</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
@@ -41,7 +41,7 @@ export const AccidentTable: React.FC<Props> = ({ accidents, t, normalizeAccident
                 <td className="p-4 font-medium text-slate-700">{`${acc.fullName} ${acc.lastName}`}</td>
                 <td className="p-4">
                   <span className="px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-700 rounded border border-amber-200">
-                    {t(`steps.personalData.options.${normalizeAccidentType(acc.accidentType)}`) || acc.accidentType}
+                    {t(`steps.personalData.options.${normalizeTranslationKey(acc.accidentType)}`)}
                   </span>
                 </td>
                 <td className="p-4 text-slate-500 max-w-xs truncate">{acc.addressText}</td>
@@ -49,8 +49,12 @@ export const AccidentTable: React.FC<Props> = ({ accidents, t, normalizeAccident
                   {new Date(acc.createdAt).toLocaleDateString()}
                 </td>
                 <td>
-                  {/* Aqui você pode passar `onExport` via props se quiser usar o hook `useExport` */}
-                  <button>{t("dashboard.exportBtn")}</button>
+                  <button
+                    onClick={() => onExport?.(acc.id)}
+                    className="text-blue-600 hover:text-blue-800 underline px-2"
+                  >
+                    {t("dashboard.exportBtn")}
+                  </button>
                 </td>
               </tr>
             ))}

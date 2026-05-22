@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 
 const apiClient = axios.create({
   // Garante que o fallback para localhost funciona se VITE_API_URL falhar
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL:  process.env.NODE_ENV === "production" ? import.meta.env.VITE_API_URL : "http://localhost:3000/api",
 });
 
 apiClient.interceptors.request.use((config) => {

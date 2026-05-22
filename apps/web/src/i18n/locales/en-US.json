@@ -85,5 +85,12 @@
   "languageSelector": {
     "es": "Spanish",
     "en-us": "English"
+    
+  },
+  "forms":{
+    "AccidentReport":{
+      "title": "Accident Report"
+    }
   }
-}
+  
+ }

@@ -15,7 +15,7 @@ export const LoginForm: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api"
+  const BACKEND_URL = process.env.NODE_ENV === "production" ? import.meta.env.VITE_API_URL : "http://localhost:3000/api"
 
   const handleAuthSuccess = (token: string, tenantSlug: string, user: any) => {
     loginGlobal(token, tenantSlug, user);
@@ -48,10 +48,10 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 w-full">
+    <div className="space-y-4 sm:space-y-6 w-full p-2">
       {/* Subtítulo traduzido dinamicamente com quebra responsiva de texto */}
       <p className="text-xs sm:text-sm text-slate-500 text-center leading-relaxed">
-        {t("login_subtitle")}
+        LOGIN
       </p>
 
       {errorMsg && (
@@ -63,7 +63,7 @@ export const LoginForm: React.FC = () => {
       <form onSubmit={handleTraditionalSubmit} className="space-y-4 text-left w-full">
         <div>
           <label className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
-            {t("email_label")}
+           EMAIL
           </label>
           <input
             type="email"
@@ -77,7 +77,7 @@ export const LoginForm: React.FC = () => {
 
         <div>
           <label className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
-            {t("password_label")}
+            PASSWORD
           </label>
           <input
             type="password"
@@ -94,7 +94,7 @@ export const LoginForm: React.FC = () => {
           disabled={isLoading}
           className="w-full py-2.5 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition text-sm shadow-lg shadow-blue-100 disabled:opacity-50"
         >
-          {isLoading ? t("btn_loading") : t("btn_enter")}
+          {isLoading ? 'LOADING...' : 'ENTER'}
         </Button>
       </form>
 
@@ -103,7 +103,7 @@ export const LoginForm: React.FC = () => {
           <span className="w-full border-t border-slate-200"></span>
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-slate-400">{t("or_separator")}</span>
+          <span className="bg-white px-2 text-slate-400">||</span>
         </div>
       </div>
 

@@ -37,12 +37,12 @@ const AppContent: React.FC = () => {
         /* FLUXO 3: AUTENTICADO COMO USUÁRIO OPERACIONAL (KONVA) */
         <div className="w-full max-w-4xl mx-auto  flex flex-col justify-center animate-in fade-in zoom-in-95 duration-400">
           <div className="mb-6 w-full text-left">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800 break-words">
+            <h2 className="text-4xl sm:text-2xl font-bold text-slate-800 break-words">
               {t('welcome')}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed break-words">
+            {/* <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed break-words">
               {t('start_report')}
-            </p>
+            </p> */}
           </div>
           <div className="w-full overflow-x-auto rounded-xl">
             <AccidentReportForm />
