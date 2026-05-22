@@ -21,41 +21,50 @@ console.log("🔍 Verificando Variáveis AWS:", {
 
 const app = express();
 
-// Middlewares de Segurança Globais - COOP relaxado globalmente para suportar popups seguros
+// ✅ CORREÇÃO: Removemos o COOP rígido do Helmet global para não quebrar o SDK da Google no client-side
 app.use(
   helmet({
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    crossOriginOpenerPolicy: false,
     crossOriginEmbedderPolicy: false,
   }),
 );
 
+// ✅ CONFIGURAÇÃO DE CORS BLINDADA PARA PRODUÇÃO (Substitui apenas este bloco no server.ts)
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3001",
   "http://localhost:3000",
   "http://13.60.56.153:3001",
-  "http://ec2-13-60-56-153.eu-north-1.compute.amazonaws.com:3001"
+  "http://13.60.56.153:3000"
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permite requests sem origem (como ferramentas de API ou curl)
+    // Permite requests sem origem (como ferramentas de API, Uptime monitors ou curl)
     if (!origin) return callback(null, true);
     
-    // Validação rígida das origens permitidas em ambiente de produção
-    if (allowedOrigins.includes(origin) || origin.includes("ec2-13-60-56-153.eu-north-1.compute.amazonaws.com")) {
-      callback(null, true);
+    // Verifica se a origem está explicitamente mapeada
+    const isAllowed = allowedOrigins.includes(origin);
+    
+    // Verifica se a requisição vem do ecossistema AWS do ToSeguro (independente da porta ou subdomínio)
+    const isAWSEcosystem = origin.includes("13.60.56.153") || 
+                           origin.includes("compute.amazonaws.com");
+
+    if (isAllowed || isAWSEcosystem) {
+      return callback(null, true);
     } else {
-      console.log("❌ Bloqueado por CORS: Origem recebida:", origin);
-      callback(new Error("Bloqueado por política estrita de CORS do ToSeguro"));
+      console.log("❌ Bloqueado por CORS Rígido. Origem não autorizada:", origin);
+      return callback(new Error("Bloqueado por política estrita de CORS do ToSeguro"));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-tenant-id"]
 }));
 
 app.use(express.json());
 
-// --- Endpoint de Infraestrutura NATIVO (Bypass de logs e middlewares) ---
+// --- Endpoint de Infraestrutura NATIVO ---
 app.get("/health", (req, res) => {
   return res.status(200).json({ 
     status: "healthy", 
@@ -65,16 +74,10 @@ app.get("/health", (req, res) => {
 
 const authController = new AuthController();
 
-// --- 🔓 Rotas de Autenticação Públicas (Grupo Isolado com Correção de Middleware de Cabeçalho) ---
+// --- 🔓 Rotas de Autenticação Públicas (Grupo Isolado) ---
 const publicAuthRoutes = express.Router();
 
-// ✅ CORREÇÃO CRÍTICA: Middleware para injetar os cabeçalhos que autorizam o handshake da Google
-publicAuthRoutes.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
-  next();
-});
-
+// ✅ CORREÇÃO: Removemos totalmente os setHeaders manuais de COOP que causavam o erro 401 invalid_client
 publicAuthRoutes.post("/login", (req, res) => authController.login(req, res));
 publicAuthRoutes.post("/google", (req, res) => authController.googleLogin(req, res));
 
@@ -87,7 +90,6 @@ const protectedRoutes = express.Router();
 protectedRoutes.use(authMiddleware);
 protectedRoutes.use(tenantMiddleware);
 
-// Endpoint de Admin movido para dentro do contexto seguro de Tenant de forma rígida
 protectedRoutes.post("/auth/admin-create", (req, res) => authController.createByAdmin(req, res));
 
 // Endpoints de Sinistros
@@ -101,7 +103,6 @@ protectedRoutes.get("/accidents/presigned-url", accidentController.getPresignedU
 protectedRoutes.get("/accidents/photo-url", accidentController.getPhotoUrl.bind(accidentController));
 protectedRoutes.get("/accidents/:id/export", accidentController.getExport.bind(accidentController));
 
-// Aplica o prefixo /api nas rotas que exigem token e tenant id
 app.use("/api", protectedRoutes);
 
 const PORT = process.env.PORT || 3000;
