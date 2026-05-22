@@ -26,7 +26,7 @@ jobs:
             git pull origin main
             cd apps
 
-            # 1. Gera o .env para o backend (usado pelo docker-compose em runtime)
+            # 1. Gera o .env completo (BACKEND + FRONTEND de forma explícita)
             echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
             echo "PORT=${{ secrets.PORT }}" >> .env
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
@@ -41,17 +41,20 @@ jobs:
             echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> .env
             echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            
+            # ✅ INJEÇÃO CRÍTICA: Garante que o docker-compose tenha onde ler as variáveis em tempo de build
+            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+            echo "VITE_API_URL=http://${{ secrets.AWS_HOST }}:3000/api" >> .env
 
-            # 2. Define variáveis temporárias no shell para o build do frontend
-            # O /api no final é essencial para o axios buscar no endpoint correto
+            # 2. Define também no escopo do shell (Double-check de segurança)
             export VITE_GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
             export VITE_API_URL="http://${{ secrets.AWS_HOST }}:3000/api"
 
-            # 3. Build do frontend usando --build-arg (IGNORA ARQUIVOS FÍSICOS .ENV)
+            # 3. Força o build completo destruindo qualquer cache do Nginx
             docker-compose build --no-cache \
               --build-arg VITE_GOOGLE_CLIENT_ID="$VITE_GOOGLE_CLIENT_ID" \
               --build-arg VITE_API_URL="$VITE_API_URL" \
               app
 
-            # 4. Sobe tudo
+            # 4. Levanta o ecossistema atualizado
             docker-compose up -d --remove-orphans
