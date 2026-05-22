@@ -31,8 +31,33 @@ jobs:
             # 3. Mudar para o diretório da infraestrutura
             cd apps
 
-            # 4. Atualizar as variáveis de ambiente a partir das Secrets do GitHub
-            echo "${{ secrets.PROD_ENV_FILE }}" > .env
+            # 4. Limpar e recriar o arquivo .env injetando as Secrets exatas do teu GitHub
+            echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
+            echo "PORT=${{ secrets.PORT }}" >> .env
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            
+            # Variáveis AWS mapeadas do teu print
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+            echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> .env
+            
+            # Mapeamento do serviço de email do teu print
+            echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env
+            echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env
+            echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
+            echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> .env
+            echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
 
-            # 5. Orquestrar os containers com Zero Downtime
-            docker-compose up --build -d --remove-orphans
+            # Variáveis do Google do teu print
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            
+            # 👇 O Vite exige o prefixo VITE_ para compilar, mas lê o teu segredo GOOGLE_CLIENT_ID
+            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+            
+            # 👇 Define a URL da API para o teu frontend apontar na VPS
+            echo "VITE_API_URL=http://${{ secrets.AWS_HOST }}:3000" >> .env
+
+            # 5. Orquestrar os containers com Zero Downtime injetando rigidamente o arquivo .env
+            docker-compose --env-file /home/ubuntu/ToSeguroApp/apps/.env up --build -d --remove-orphans
