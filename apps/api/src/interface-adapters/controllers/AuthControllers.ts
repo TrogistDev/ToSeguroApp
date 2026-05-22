@@ -82,7 +82,7 @@ export class AuthController {
       const payload = ticket.getPayload();
 
       console.log("📦 PAYLOAD GOOGLE:", payload);
-
+      console.log(payload.email)
       if (!payload) {
         return res.status(401).json({
           error: "Payload Google inválido",
