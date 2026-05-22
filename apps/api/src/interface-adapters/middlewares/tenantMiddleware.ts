@@ -27,6 +27,13 @@ export const tenantMiddleware = (
         message: "Não foi possível estabelecer o contexto de isolamento corporativo (Tenant ID ausente).",
       });
     }
+    if (!tenantId) {
+    return res.status(403).json({
+      error: "Acesso Proibido",
+      message: "Tenant ID ausente.",
+      debug: { headerReceived: req.headers["x-tenant-id"] } // Adicione para debug rápido
+    });
+  }
 
     // 3. Mutação Segura do Objeto Request (Para controllers que não usam o AsyncLocalStorage)
     (req as any).tenantId = tenantId;

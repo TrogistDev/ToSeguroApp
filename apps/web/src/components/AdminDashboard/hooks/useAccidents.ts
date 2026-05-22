@@ -17,17 +17,12 @@ export const useAccidents = (token: string, tenantSlug: string) => {
   const fetchAccidents = useCallback(async () => {
     try {
       // O apiClient já possui a baseURL correta (via VITE_API_URL)
-      const res = await apiClient.get("/accidents", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "X-Tenant-Slug": tenantSlug,
-        },
-      });
+      const res = await apiClient.get("/accidents");
       setAccidents(res.data);
     } catch (err) {
       console.error("Erro ao carregar dados do dashboard", err);
     }
-  }, [token, tenantSlug]);
+  }, []);
 
   useEffect(() => {
     fetchAccidents();
