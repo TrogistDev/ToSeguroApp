@@ -1,14 +1,16 @@
+version: '3.8'
+
 services:
   app:
     build:
-      context: ./web       # <-- Sobe um nível para achar a pasta web (fora de apps)
+      context: ./web       # Sobe um nível para achar a pasta web (fora de apps)
       dockerfile: Dockerfile
       args:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
         VITE_API_URL: ${VITE_API_URL}
     container_name: accident_frontend
     restart: always
-    env_file:              # <--- ADICIONA ISTO
+    env_file:
       - .env
     ports:
       - "3001:3001"
@@ -19,7 +21,7 @@ services:
 
   api:
     build:
-      context: ./api        # <-- Se a API está dentro de apps/api, o caminho relativo ao compose é apenas ./api
+      context: ./api        # Se a API está dentro de apps/api, o caminho relativo ao compose é apenas ./api
       dockerfile: Dockerfile
     container_name: accident_backend
     restart: always
@@ -46,9 +48,10 @@ services:
     container_name: accident_db
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER:-user_admin}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password_secure}
-      POSTGRES_DB: ${DB_NAME:-accident_report_db}
+      # ✅ ARQUITETURA ALINHADA: O banco agora usa exatamente as mesmas variáveis do .env gerado no pipeline
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
