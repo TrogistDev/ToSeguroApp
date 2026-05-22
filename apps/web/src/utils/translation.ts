@@ -1,37 +1,19 @@
-// apps/web/src/utils/translation.ts
-
 /**
- * Normaliza uma string para ser usada como chave de tradução:
- * - Mapeia palavras-chave específicas (ex: "colis_oTravesía" → "colisao")
- * - Remove acentos, minúsculas, espaços → `_`
+ * Normaliza uma string para ser usada como chave de tradução.
+ * Mapeia explicitamente os casos reais que vêm do backend (ex: "colis_oTravesía")
  */
 export const normalizeTranslationKey = (str: string): string => {
   if (!str) return "";
 
-  // Mapeamento direto para os casos reais que aparecem no log
-  const lower = str.toLowerCase();
+  // Remove acentos e torna minúsculo
+  const normalized = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-  if (
-    lower.includes("colis") ||
-    lower.includes("collision") ||
-    lower.includes("colis_o_travesia") ||
-    lower.includes("colisotravesia")
-  ) {
-    return "colisao";
-  }
+  // Casos reais do seu log:
+  if (normalized.includes("colis") || normalized.includes("collision")) return "colisao";
+  if (normalized.includes("capot") || normalized.includes("rollover")) return "capotamento";
+  if (normalized.includes("atropel") || normalized.includes("hit_and_run")) return "atropelamento";
+  if (normalized.includes("queda") || normalized.includes("fall")) return "queda";
 
-  if (lower.includes("capot") || lower.includes("rollover")) {
-    return "capotamento";
-  }
-
-  if (lower.includes("atropel") || lower.includes("hit_and_run")) {
-    return "atropelamento";
-  }
-
-  if (lower.includes("queda") || lower.includes("fall")) {
-    return "queda";
-  }
-
-  // Fallback: normaliza o resto
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "_");
+  // Fallback: usa o próprio texto como chave (se já for uma chave válida)
+  return normalized;
 };

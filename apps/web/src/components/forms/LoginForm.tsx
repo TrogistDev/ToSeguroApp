@@ -15,7 +15,7 @@ export const LoginForm: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const BACKEND_URL = "http://localhost:3000/api";
+  const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api"
 
   const handleAuthSuccess = (token: string, tenantSlug: string, user: any) => {
     loginGlobal(token, tenantSlug, user);

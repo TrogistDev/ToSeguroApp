@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import apiClient from "../services/apiClient";
 import { useTranslation } from "react-i18next";
 
 export const useCreateUser = (token: string) => {
@@ -19,15 +19,19 @@ export const useCreateUser = (token: string) => {
     setSuccessMsg(null);
 
     try {
-      await axios.post(
-        "http://localhost:3000/api/auth/admin-create",
+      // ✅ USANDO O APICLIENT: Ele já respeita a baseURL configurada no .env
+      await apiClient.post(
+        "/auth/admin-create",
         { email, firstName, lastName, role },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          } 
+        }
       );
+      
       setSuccessMsg(t("dashboard.successTitle"));
-      setEmail("");
-      setFirstName("");
-      setLastName("");
+      resetFormAndMessages();
     } catch (err: any) {
       setErrorMsg(err.response?.data?.error || t("error.generic"));
     }
