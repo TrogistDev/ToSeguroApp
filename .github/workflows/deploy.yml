@@ -81,5 +81,5 @@ jobs:
               --build-arg VITE_API_URL="$VITE_API_URL" \
               app
 
-            docker-compose down -v
+            docker-compose down
             docker-compose up -d --remove-orphans

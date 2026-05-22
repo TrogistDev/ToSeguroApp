@@ -8,12 +8,6 @@ import helmet from "helmet";
 import { createAuthRouter } from "./interface-adapters/routes/auth.router";
 import { createProtectedApiRouter } from "./interface-adapters/routes/protected-api.router";
 
-console.log("🔍 Verificando Variáveis AWS:", {
-  region: process.env.AWS_REGION,
-  key: process.env.AWS_ACCESS_KEY_ID ? "CARREGADA" : "AUSENTE",
-  secret: process.env.AWS_SECRET_ACCESS_KEY ? "CARREGADA" : "AUSENTE",
-  bucket: process.env.AWS_BUCKET_NAME,
-});
 
 const app = express();
 
