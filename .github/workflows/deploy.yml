@@ -26,55 +26,51 @@ jobs:
             git pull origin main
             cd apps
 
-            # 1. Definição explícita de variáveis para sincronizar API e Banco de Dados
-            # Se tiveres estes secrets configurados no GitHub, ele usa. Caso contrário, assume o teu padrão real.
-            DB_USER="${{ secrets.DB_USER }}"
-            DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-            DB_NAME="${{ secrets.DB_NAME }}"
+            # 1. Higieniza e define variáveis de ambiente sem quebras de linha fantasmas
+            DB_USER=$(echo "${{ secrets.DB_USER }}" | tr -d '\r\n')
+            DB_PASSWORD=$(echo "${{ secrets.DB_PASSWORD }}" | tr -d '\r\n')
+            DB_NAME=$(echo "${{ secrets.DB_NAME }}" | tr -d '\r\n')
+            CLEAN_GOOGLE_ID=$(echo "${{ secrets.GOOGLE_CLIENT_ID }}" | tr -d '\r\n')
 
-            # ✅ ALINHAMENTO RÍGIDO: Fallbacks alterados para refletir o teu ambiente real (postgres e toseguro_db)
             [ -z "$DB_USER" ] && DB_USER="postgres"
             [ -z "$DB_PASSWORD" ] && DB_PASSWORD="password_secure"
             [ -z "$DB_NAME" ] && DB_NAME="toseguro_db"
 
-            # Gera o arquivo .env limpo em runtime na VPS
-            echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
-            echo "PORT=${{ secrets.PORT }}" >> .env
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
-            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
-            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
-            echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> .env
-            echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env
-            echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env
-            echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
-            echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> .env
-            echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
-            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
-            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+            # Gera o arquivo .env limpando as quebras ocultas
+            echo "NODE_ENV=$(echo "${{ secrets.NODE_ENV }}" | tr -d '\r\n')" > .env
+            echo "PORT=$(echo "${{ secrets.PORT }}" | tr -d '\r\n')" >> .env
+            echo "JWT_SECRET=$(echo "${{ secrets.JWT_SECRET }}" | tr -d '\r\n')" >> .env
+            echo "AWS_ACCESS_KEY_ID=$(echo "${{ secrets.AWS_ACCESS_KEY_ID }}" | tr -d '\r\n')" >> .env
+            echo "AWS_SECRET_ACCESS_KEY=$(echo "${{ secrets.AWS_SECRET_ACCESS_KEY }}" | tr -d '\r\n')" >> .env
+            echo "AWS_REGION=$(echo "${{ secrets.AWS_REGION }}" | tr -d '\r\n')" >> .env
+            echo "AWS_BUCKET_NAME=$(echo "${{ secrets.AWS_BUCKET_NAME }}" | tr -d '\r\n')" >> .env
+            echo "EMAIL_HOST=$(echo "${{ secrets.EMAIL_HOST }}" | tr -d '\r\n')" >> .env
+            echo "EMAIL_PORT=$(echo "${{ secrets.EMAIL_PORT }}" | tr -d '\r\n')" >> .env
+            echo "EMAIL_USER=$(echo "${{ secrets.EMAIL_USER }}" | tr -d '\r\n')" >> .env
+            echo "EMAIL_PASS=$(echo "${{ secrets.EMAIL_PASS }}" | tr -d '\r\n')" >> .env
+            echo "EMAIL_FROM=$(echo "${{ secrets.EMAIL_FROM }}" | tr -d '\r\n')" >> .env
+            echo "GOOGLE_CLIENT_SECRET=$(echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | tr -d '\r\n')" >> .env
+            echo "GOOGLE_CLIENT_ID=$CLEAN_GOOGLE_ID" >> .env
 
-            # Força as variáveis que o docker-compose vai ler para mapear o container 'accident_db'
             echo "DB_USER=$DB_USER" >> .env
             echo "DB_PASSWORD=$DB_PASSWORD" >> .env
             echo "DB_NAME=$DB_NAME" >> .env
 
-            # ✅ URL DE CONEXÃO: Aponta para o host interno 'postgres' da rede do Docker com os dados corretos
             echo "DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@postgres:5432/$DB_NAME?schema=public" >> .env
             
-            # ✅ AJUSTE DE SINTAXE: Injeção de build do Frontend em linha única contínua para evitar o erro 'status 1'
-            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
-            echo "VITE_API_URL=http://${{ secrets.AWS_HOST }}:3000/api" >> .env
+            # Injeção de variáveis tratadas para o Frontend
+            echo "VITE_GOOGLE_CLIENT_ID=$CLEAN_GOOGLE_ID" >> .env
+            echo "VITE_API_URL=http://$(echo "${{ secrets.AWS_HOST }}" | tr -d '\r\n'):3000/api" >> .env
 
-            # Define no escopo do shell do runner de forma segura
-            export VITE_GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
-            export VITE_API_URL="http://${{ secrets.AWS_HOST }}:3000/api"
+            export VITE_GOOGLE_CLIENT_ID="$CLEAN_GOOGLE_ID"
+            export VITE_API_URL="http://$(echo "${{ secrets.AWS_HOST }}" | tr -d '\r\n'):3000/api"
 
-            # 3. Build do frontend passando os argumentos limpos
+            # 3. Build do frontend passando os argumentos higienizados
             docker-compose build --no-cache \
               --build-arg VITE_GOOGLE_CLIENT_ID="$VITE_GOOGLE_CLIENT_ID" \
               --build-arg VITE_API_URL="$VITE_API_URL" \
               app
 
-            # 4. Limpa volumes antigos para apagar clusters dessincronizados e levanta a stack limpa
+            # 4. Limpa volumes e levanta a stack sem erros de sintaxe
             docker-compose down -v
             docker-compose up -d --remove-orphans
