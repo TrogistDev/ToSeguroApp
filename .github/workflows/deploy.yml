@@ -26,19 +26,28 @@ jobs:
             git pull origin main
             cd apps
 
-            # 1. Higieniza e define variáveis de ambiente sem quebras de linha fantasmas
-            DB_USER=$(echo "${{ secrets.DB_USER }}" | tr -d '\r\n')
-            DB_PASSWORD=$(echo "${{ secrets.DB_PASSWORD }}" | tr -d '\r\n')
-            DB_NAME=$(echo "${{ secrets.DB_NAME }}" | tr -d '\r\n')
-            CLEAN_GOOGLE_ID=$(echo "${{ secrets.GOOGLE_CLIENT_ID }}" | tr -d '\r\n')
+            # 1. Captura limpa dos segredos para variáveis locais para evitar quebras no parse do YAML
+            RAW_DB_USER="${{ secrets.DB_USER }}"
+            RAW_DB_PASS="${{ secrets.DB_PASSWORD }}"
+            RAW_DB_NAME="${{ secrets.DB_NAME }}"
+            RAW_GOOGLE_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+            RAW_AWS_HOST="${{ secrets.AWS_HOST }}"
 
+            # 2. Higienização estrita de Carriage Return e Newline por Bash nativo
+            DB_USER=$(echo "$RAW_DB_USER" | tr -d '\r\n')
+            DB_PASSWORD=$(echo "$RAW_DB_PASS" | tr -d '\r\n')
+            DB_NAME=$(echo "$RAW_DB_NAME" | tr -d '\r\n')
+            CLEAN_GOOGLE_ID=$(echo "$RAW_GOOGLE_ID" | tr -d '\r\n')
+            CLEAN_AWS_HOST=$(echo "$RAW_AWS_HOST" | tr -d '\r\n')
+
+            # 3. Aplicação de Fallbacks Rígidos para Produção
             [ -z "$DB_USER" ] && DB_USER="postgres"
             [ -z "$DB_PASSWORD" ] && DB_PASSWORD="password_secure"
             [ -z "$DB_NAME" ] && DB_NAME="toseguro_db"
 
-            # Gera o arquivo .env limpando as quebras ocultas
+            # 4. Escrita limpa do .env em runtime (Usa aspas duplas para o bloco não quebrar)
             echo "NODE_ENV=$(echo "${{ secrets.NODE_ENV }}" | tr -d '\r\n')" > .env
-            echo "PORT=$(echo "${{ secrets.PORT }}" | tr -d '\r\n')" >> .env
+            echo "PORT=$(echo "${{ secrets.PORT }}" | tr -d '\r\n' | grep . || echo "3000")" >> .env
             echo "JWT_SECRET=$(echo "${{ secrets.JWT_SECRET }}" | tr -d '\r\n')" >> .env
             echo "AWS_ACCESS_KEY_ID=$(echo "${{ secrets.AWS_ACCESS_KEY_ID }}" | tr -d '\r\n')" >> .env
             echo "AWS_SECRET_ACCESS_KEY=$(echo "${{ secrets.AWS_SECRET_ACCESS_KEY }}" | tr -d '\r\n')" >> .env
@@ -55,22 +64,21 @@ jobs:
             echo "DB_USER=$DB_USER" >> .env
             echo "DB_PASSWORD=$DB_PASSWORD" >> .env
             echo "DB_NAME=$DB_NAME" >> .env
-
             echo "DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@postgres:5432/$DB_NAME?schema=public" >> .env
             
-            # Injeção de variáveis tratadas para o Frontend
             echo "VITE_GOOGLE_CLIENT_ID=$CLEAN_GOOGLE_ID" >> .env
-            echo "VITE_API_URL=http://$(echo "${{ secrets.AWS_HOST }}" | tr -d '\r\n'):3000/api" >> .env
+            echo "VITE_API_URL=http://$CLEAN_AWS_HOST:3000/api" >> .env
 
+            # 5. Export de variáveis para o contexto do Docker Build
             export VITE_GOOGLE_CLIENT_ID="$CLEAN_GOOGLE_ID"
-            export VITE_API_URL="http://$(echo "${{ secrets.AWS_HOST }}" | tr -d '\r\n'):3000/api"
+            export VITE_API_URL="http://$CLEAN_AWS_HOST:3000/api"
 
-            # 3. Build do frontend passando os argumentos higienizados
+            # 6. Compilação do Frontend
             docker-compose build --no-cache \
               --build-arg VITE_GOOGLE_CLIENT_ID="$VITE_GOOGLE_CLIENT_ID" \
               --build-arg VITE_API_URL="$VITE_API_URL" \
               app
 
-            # 4. Limpa volumes e levanta a stack sem erros de sintaxe
+            # 7. Reinicialização controlada dos containers e remoção de órfãos
             docker-compose down -v
             docker-compose up -d --remove-orphans
