@@ -1,30 +1,23 @@
 version: '3.8'
 
 services:
-  # ========================================================
-  # PROXY REVERSO & SSL AUTOMÁTICO (Mata o erro de GPS)
-  # ========================================================
   nginx-proxy:
     image: 'jc21/nginx-proxy-manager:latest'
     container_name: accident_proxy
     restart: always
     ports:
-      - "80:80"   # HTTP público (Todos acessam)
-      - "443:443" # HTTPS público (Garante o GPS em todos os PCs)
-      - "81:81"   # Painel de Administração (Apenas para tu configurares)
+      - "80:80"
+      - "443:443"
+      - "81:81"
     volumes:
       - ./nginx/data:/data
       - ./nginx/letsencrypt:/etc/letsencrypt
-    depends_on:
-      - app
-      - api
+    networks:
+      - app-network
 
-  # ========================================================
-  # FRONTEND (React / Vite)
-  # ========================================================
   app:
     build:
-      context: ./web       # Sobe um nível para achar a pasta web (fora de apps)
+      context: ./web
       dockerfile: Dockerfile
       args:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
@@ -33,42 +26,29 @@ services:
     restart: always
     env_file:
       - .env
-    ports:
-      - "3001:3001"
+    networks:
+      - app-network
     depends_on:
       - api
-      - postgres
 
-  # ========================================================
-  # BACKEND (Node.js API)
-  # ========================================================
   api:
     build:
-      context: ./api        # Se a API está dentro de apps/api, o caminho relativo ao compose é apenas ./api
+      context: ./api
       dockerfile: Dockerfile
     container_name: accident_backend
     restart: always
     env_file:
       - .env
-    ports:
-      - "3000:3000"
+    networks:
+      - app-network
     environment:
+      # FIX: Garante que usamos o nome do serviço 'postgres' e não localhost
+      DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?schema=public"
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      AWS_REGION: ${AWS_REGION}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
     depends_on:
       - postgres
 
-  # ========================================================
-  # DATABASE (PostgreSQL)
-  # ========================================================
   postgres:
     image: postgres:16-alpine
     container_name: accident_db
@@ -77,10 +57,14 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "5432:5432"
+    networks:
+      - app-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   postgres_data:
