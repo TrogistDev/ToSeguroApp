@@ -21,44 +21,37 @@ jobs:
           key: ${{ secrets.AWS_PRIVATE_KEY }}
           script_stop: true
           script: |
-            # 1. Navegar direto para a pasta do projeto que JÁ EXISTE na máquina
             cd /home/ubuntu/ToSeguroApp
-
-            # 2. Atualizar o código de forma rígida com o que foi commitado
             git reset --hard
             git pull origin main
-
-            # 3. Mudar para o diretório da infraestrutura
             cd apps
 
-            # 4. Limpar e recriar o arquivo .env injetando as Secrets exatas do teu GitHub
+            # 1. Gera o .env para o backend (usado pelo docker-compose em runtime)
             echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
             echo "PORT=${{ secrets.PORT }}" >> .env
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-            
-            # Variáveis AWS mapeadas do teu print
             echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
             echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
             echo "AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}" >> .env
-            
-            # Mapeamento do serviço de email do teu print
             echo "EMAIL_HOST=${{ secrets.EMAIL_HOST }}" >> .env
             echo "EMAIL_PORT=${{ secrets.EMAIL_PORT }}" >> .env
             echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
             echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> .env
             echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
-
-            # Variáveis do Google do teu print
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
-            
-            # 👇 O Vite exige o prefixo VITE_ para compilar, mas lê o teu segredo GOOGLE_CLIENT_ID
-            echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
-            
-            # 👇 Define a URL da API para o teu frontend apontar na VPS
-            echo "VITE_API_URL=http://${{ secrets.AWS_HOST }}:3000" >> .env
 
-            # 5. Build forçado injetando variáveis diretamente no build do compose
-            docker-compose --env-file .env build --no-cache app
+            # 2. Define variáveis temporárias no shell para o build do frontend
+            # O /api no final é essencial para o axios buscar no endpoint correto
+            export VITE_GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
+            export VITE_API_URL="http://${{ secrets.AWS_HOST }}:3000/api"
+
+            # 3. Build do frontend usando --build-arg (IGNORA ARQUIVOS FÍSICOS .ENV)
+            docker-compose build --no-cache \
+              --build-arg VITE_GOOGLE_CLIENT_ID="$VITE_GOOGLE_CLIENT_ID" \
+              --build-arg VITE_API_URL="$VITE_API_URL" \
+              app
+
+            # 4. Sobe tudo
             docker-compose up -d --remove-orphans

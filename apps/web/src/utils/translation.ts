@@ -1,31 +1,37 @@
+// apps/web/src/utils/translation.ts
+
+/**
+ * Normaliza uma string para ser usada como chave de tradução:
+ * - Mapeia palavras-chave específicas (ex: "colis_oTravesía" → "colisao")
+ * - Remove acentos, minúsculas, espaços → `_`
+ */
 export const normalizeTranslationKey = (str: string): string => {
   if (!str) return "";
 
-  // Mapa explícito para os casos reais que você viu no log
-  const rawLower = str.toLowerCase();
+  // Mapeamento direto para os casos reais que aparecem no log
+  const lower = str.toLowerCase();
 
   if (
-    rawLower.includes("colis") ||
-    rawLower.includes("collision") ||
-    rawLower.includes("colis_o_travesia") ||
-    rawLower.includes("colisotravesia")
+    lower.includes("colis") ||
+    lower.includes("collision") ||
+    lower.includes("colis_o_travesia") ||
+    lower.includes("colisotravesia")
   ) {
     return "colisao";
   }
 
-  if (rawLower.includes("capot") || rawLower.includes("rollover")) {
+  if (lower.includes("capot") || lower.includes("rollover")) {
     return "capotamento";
   }
 
-  if (rawLower.includes("atropel") || rawLower.includes("hit_and_run")) {
+  if (lower.includes("atropel") || lower.includes("hit_and_run")) {
     return "atropelamento";
   }
 
-  if (rawLower.includes("queda") || rawLower.includes("fall")) {
+  if (lower.includes("queda") || lower.includes("fall")) {
     return "queda";
   }
 
-  // Fallback: normaliza restante
-  const normalized = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "_");
-  return normalized;
+  // Fallback: normaliza o resto
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "_");
 };
