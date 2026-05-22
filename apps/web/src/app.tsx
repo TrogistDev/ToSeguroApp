@@ -6,7 +6,7 @@ import { AccidentReportForm } from './components/forms/AccidentReportForm';
 import { LoginForm } from './components/forms/LoginForm';
 import { Layout } from './components/layout/Layout';
 import { useAuthStore } from './store/authStore';
-import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminDashboard } from './components/AdminDashboard/AdminDashboard';
 
 const AppContent: React.FC = () => {
   const { t } = useTranslation();

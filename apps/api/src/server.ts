@@ -1,6 +1,5 @@
 // apps/api/src/server.ts
 import dotenv from "dotenv";
-
 dotenv.config();
 
 import express from "express";
@@ -11,7 +10,8 @@ import { tenantMiddleware } from "./interface-adapters/middlewares/tenantMiddlew
 import { AccidentController } from "./interface-adapters/controllers/AccidentController";
 import { AccidentRepository } from "./infrastructure/repositories/AccidentRepository";
 import { ExportAccidentUseCase } from "./core/use-cases/ExportAccidentUseCase.js";
-import { AuthController } from "./interface-adapters/controllers/AuthControllers"; // <-- Corrigido para o singular 'AuthController'
+import { AuthController } from "./interface-adapters/controllers/AuthControllers";
+
 console.log("🔍 Verificando Variáveis AWS:", {
   region: process.env.AWS_REGION,
   key: process.env.AWS_ACCESS_KEY_ID ? "CARREGADA" : "AUSENTE",
@@ -28,6 +28,7 @@ app.use(
     crossOriginEmbedderPolicy: false,
   }),
 );
+
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3001",
@@ -37,7 +38,6 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permite requisições sem origem (como mobile apps ou ferramentas de teste como Postman/Curl)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -51,24 +51,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// --- Rotas Públicas (Abertas) ---
-const authController = new AuthController();
-app.post("/api/auth/login", (req, res) => authController.login(req, res));
-app.post("/api/auth/google", (req, res) =>
-  authController.googleLogin(req, res),
-);
-app.post("/api/auth/admin-create", authMiddleware, (req, res) =>
-  authController.createByAdmin(req, res),
-);
-
-// --- Repositórios e Casos de Uso ---
-const accidentRepo = new AccidentRepository();
-const exportAccidentUseCase = new ExportAccidentUseCase(accidentRepo);
-const accidentController = new AccidentController(
-  accidentRepo,
-  exportAccidentUseCase,
-);
-
+// --- Endpoint de Infraestrutura NATIVO (Bypass de logs e middlewares) ---
 app.get("/health", (req, res) => {
   return res.status(200).json({ 
     status: "healthy", 
@@ -76,27 +59,37 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ORDEM CORRETA: Primeiro autentica o token, depois isola o contexto do Tenant
+const authController = new AuthController();
+
+// --- 🔓 Rotas de Autenticação Públicas (Grupo Isolado) ---
+const publicAuthRoutes = express.Router();
+publicAuthRoutes.post("/login", (req, res) => authController.login(req, res));
+publicAuthRoutes.post("/google", (req, res) => authController.googleLogin(req, res));
+
+// Aplica o prefixo /api/auth nas rotas públicas de login
+app.use("/api/auth", publicAuthRoutes);
+
+
+// --- 🔒 Rotas de Negócio e Gestão (100% Blindadas com Auth e Tenant) ---
 const protectedRoutes = express.Router();
 protectedRoutes.use(authMiddleware);
 protectedRoutes.use(tenantMiddleware);
 
-// Endpoints de Negócio (Agora 100% Blindados)
-// app.post("/api/accidents", accidentController.store);
+// Endpoint de Admin movido para dentro do contexto seguro de Tenant de forma rígida
+protectedRoutes.post("/auth/admin-create", (req, res) => authController.createByAdmin(req, res));
+
+// Endpoints de Sinistros
+const accidentRepo = new AccidentRepository();
+const exportAccidentUseCase = new ExportAccidentUseCase(accidentRepo);
+const accidentController = new AccidentController(accidentRepo, exportAccidentUseCase);
+
 protectedRoutes.post("/accidents", accidentController.store);
 protectedRoutes.get("/accidents", accidentController.getAll);
-protectedRoutes.get(
-  "/accidents/presigned-url",
-  accidentController.getPresignedUrl,
-);
-protectedRoutes.get(
-  "/accidents/photo-url",
-  accidentController.getPhotoUrl.bind(accidentController),
-);
-protectedRoutes.get(
-  "/accidents/:id/export",
-  accidentController.getExport.bind(accidentController),
-);
+protectedRoutes.get("/accidents/presigned-url", accidentController.getPresignedUrl);
+protectedRoutes.get("/accidents/photo-url", accidentController.getPhotoUrl.bind(accidentController));
+protectedRoutes.get("/accidents/:id/export", accidentController.getExport.bind(accidentController));
+
+// Aplica o prefixo /api nas rotas que exigem token e tenant id
 app.use("/api", protectedRoutes);
 
 const PORT = process.env.PORT || 3000;
