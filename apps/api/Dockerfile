@@ -29,9 +29,6 @@ RUN npm ci --only=production --legacy-peer-deps && \
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# ✅ DEFENSA DE RUNTIME: Copia o .env gerado na VPS para dentro do container de produção
-COPY .env* ./ 
-
 # Garante que o utilizador nodejs é dono do .env também para conseguir lê-lo
 RUN chown -R nodejs:nodejs /app
 
