@@ -27,16 +27,17 @@ jobs:
             cd apps
 
             # 1. Definição explícita de variáveis para sincronizar API e Banco de Dados
-            # Se tiveres estes secrets no GitHub, ele usa. Se não, usa o fallback idêntico ao docker-compose.
+            # Se tiveres estes secrets configurados no GitHub, ele usa. Caso contrário, assume o teu padrão real.
             DB_USER="${{ secrets.DB_USER }}"
             DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
             DB_NAME="${{ secrets.DB_NAME }}"
 
-            [ -z "$DB_USER" ] && DB_USER="user_admin"
+            # ✅ ALINHAMENTO RÍGIDO: Fallbacks alterados para refletir o teu ambiente real (postgres e toseguro_db)
+            [ -z "$DB_USER" ] && DB_USER="postgres"
             [ -z "$DB_PASSWORD" ] && DB_PASSWORD="password_secure"
-            [ -z "$DB_NAME" ] && DB_NAME="accident_report_db"
+            [ -z "$DB_NAME" ] && DB_NAME="toseguro_db"
 
-            # Gera o arquivo .env em runtime na VPS
+            # Gera o arquivo .env limpo em runtime na VPS
             echo "NODE_ENV=${{ secrets.NODE_ENV }}" > .env
             echo "PORT=${{ secrets.PORT }}" >> .env
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
@@ -52,27 +53,28 @@ jobs:
             echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
             echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
 
-            # Força as variáveis que o docker-compose vai ler para o bloco 'postgres:'
+            # Força as variáveis que o docker-compose vai ler para mapear o container 'accident_db'
             echo "DB_USER=$DB_USER" >> .env
             echo "DB_PASSWORD=$DB_PASSWORD" >> .env
             echo "DB_NAME=$DB_NAME" >> .env
 
-            # ✅ CORREÇÃO DA URL: Monta a URL dinamicamente apontando para o host 'postgres' (Rede Docker) com as credenciais certas
+            # ✅ URL DE CONEXÃO: Aponta para o host interno 'postgres' da rede do Docker com os dados corretos
             echo "DATABASE_URL=postgresql://$DB_USER:$DB_PASSWORD@postgres:5432/$DB_NAME?schema=public" >> .env
             
-            # Injeção de build do Frontend
+            # ✅ AJUSTE DE SINTAXE: Injeção de build do Frontend em linha única contínua para evitar o erro 'status 1'
             echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
             echo "VITE_API_URL=http://${{ secrets.AWS_HOST }}:3000/api" >> .env
 
+            # Define no escopo do shell do runner de forma segura
             export VITE_GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
             export VITE_API_URL="http://${{ secrets.AWS_HOST }}:3000/api"
 
-            # 3. Build do frontend
+            # 3. Build do frontend passando os argumentos limpos
             docker-compose build --no-cache \
               --build-arg VITE_GOOGLE_CLIENT_ID="$VITE_GOOGLE_CLIENT_ID" \
               --build-arg VITE_API_URL="$VITE_API_URL" \
               app
 
-            # 4. Limpa volumes antigos e levanta com a nova configuração de credenciais unificada
+            # 4. Limpa volumes antigos para apagar clusters dessincronizados e levanta a stack limpa
             docker-compose down -v
             docker-compose up -d --remove-orphans
