@@ -69,6 +69,13 @@ const accidentController = new AccidentController(
   exportAccidentUseCase,
 );
 
+app.get("/health", (req, res) => {
+  return res.status(200).json({ 
+    status: "healthy", 
+    timestamp: new Date().toISOString() 
+  });
+});
+
 // ORDEM CORRETA: Primeiro autentica o token, depois isola o contexto do Tenant
 const protectedRoutes = express.Router();
 protectedRoutes.use(authMiddleware);
