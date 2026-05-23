@@ -40,7 +40,7 @@ npm install
 npm run dev
 ```
 
-O frontend Vite normalmente roda em `http://localhost:5173`.
+O frontend Vite normalmente roda em `http://localhost:3001`.
 
 ## Executando com Docker Compose
 
